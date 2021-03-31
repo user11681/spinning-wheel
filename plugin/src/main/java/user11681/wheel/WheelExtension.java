@@ -65,12 +65,12 @@ public class WheelExtension {
             .dependency("api-resource-loader", "net.fabricmc.fabric-api:fabric-resource-loader-v0:latest.release")
             .dependency("api-screen-handler", "net.fabricmc.fabric-api:fabric-screen-handler-api-v1:latest.release")
             .dependency("api-tag-extensions", "net.fabricmc.fabric-api:fabric-tag-extensions-v0:latest.release");
-        dependencies.repository("grossfabrichackers", "https://raw.githubusercontent.com/GrossFabricHackers/maven/master");
+        dependencies.repository("gross-fabric-hackers", "https://raw.githubusercontent.com/GrossFabricHackers/maven/master");
         dependencies.repository("halfof2", "https://raw.githubusercontent.com/Devan-Kerman/Devan-Repo/master")
             .dependency("arrp", "net.devtech:arrp:latest.release");
-        dependencies.repository("havenking", "https://hephaestus.dev/release")
+        dependencies.repository("haven-king", "https://hephaestus.dev/release")
             .dependency("conrad", "dev.inkwell:conrad:latest.release");
-        dependencies.repository("jamieswhiteshirt", "https://maven.jamieswhiteshirt.com/libs-release")
+        dependencies.repository("jamies-white-shirt", "https://maven.jamieswhiteshirt.com/libs-release")
             .dependency("reach-entity-attributes", "com.jamieswhiteshirt:reach-entity-attributes:latest.release");
         dependencies.repository("jcenter", "https//jcenter.bintray.com");
         dependencies.repository("jitpack", "https://jitpack.io")
