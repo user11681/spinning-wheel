@@ -64,14 +64,11 @@ import org.gradle.api.plugins.UnknownPluginException;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
-import org.gradle.api.publish.plugins.PublishingPlugin;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.language.jvm.tasks.ProcessResources;
 import org.intellij.lang.annotations.Language;
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin;
-import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 import user11681.reflect.Accessor;
 import user11681.reflect.Classes;
 import user11681.wheel.dependency.WheelDependencyFactory;
@@ -172,9 +169,6 @@ public class ProjectHandler {
 
         this.plugins.apply(JavaLibraryPlugin.class);
         this.plugins.apply(MavenPublishPlugin.class);
-        this.plugins.apply(ArtifactoryPlugin.class);
-
-        this.tasks.withType(ArtifactoryTask.class).forEach((ArtifactoryTask task) -> task.dependsOn(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME));
 
         Classes.staticCast(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.classPointer);
         Classes.staticCast(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.classPointer);

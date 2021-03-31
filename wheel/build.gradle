@@ -20,7 +20,6 @@ gradlePlugin {
 
 repositories {
     mavenCentral()
-    gradlePluginPortal()
 
     maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
     maven {url = "https://maven.fabricmc.net"}
@@ -30,7 +29,6 @@ dependencies {
     api("net.fabricmc:fabric-loom:latest.release")
     api("net.gudenau.lib:unsafe:latest.release")
     api("user11681:reflect:latest.release")
-    api("org.jfrog.buildinfo:build-info-extractor-gradle:latest.release")
 
     compileOnly("org.jetbrains:annotations:latest.release")
 
