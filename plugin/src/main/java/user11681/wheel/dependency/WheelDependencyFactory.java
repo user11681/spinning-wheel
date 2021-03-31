@@ -87,10 +87,6 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
 
     @Override
     public org.gradle.api.artifacts.Dependency createDependency(Object dependencyNotation) {
-        if (dependencyNotation instanceof String) {
-            return super.createDependency(resolve((String) dependencyNotation));
-        }
-
-        return super.createDependency(dependencyNotation);
+        return dependencyNotation instanceof String ? super.createDependency(resolve((String) dependencyNotation)) : super.createDependency(dependencyNotation);
     }
 }

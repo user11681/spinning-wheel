@@ -63,6 +63,7 @@ public class WheelExtension {
             .dependency("api-renderer-api", "net.fabricmc.fabric-api:fabric-renderer-api-v1:latest.release")
             .dependency("api-renderer-indigo", "net.fabricmc.fabric-api:fabric-renderer-indigo:latest.release")
             .dependency("api-resource-loader", "net.fabricmc.fabric-api:fabric-resource-loader-v0:latest.release")
+            .dependency("api-screen", "net.fabricmc.fabric-api:fabric-screen-api-v1:latest.release")
             .dependency("api-screen-handler", "net.fabricmc.fabric-api:fabric-screen-handler-api-v1:latest.release")
             .dependency("api-tag-extensions", "net.fabricmc.fabric-api:fabric-tag-extensions-v0:latest.release");
         dependencies.repository("gross-fabric-hackers", "https://raw.githubusercontent.com/GrossFabricHackers/maven/master");
