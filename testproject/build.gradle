@@ -1,13 +1,13 @@
 plugins {
-//    id("fabric-loom").version("0.6-SNAPSHOT").apply(false)
-    id("wheel")
+    id("user11681.wheel")
 }
 
-project.group = "user11681"
-project.version = "0.0.0"
+group("user11681")
+version("1.2.3")
 
-repositories {
-//    maven {name = "halfof2"}
+wheel {
+    nospam = false
+    publish = false
 }
 
 dependencies {
@@ -15,4 +15,5 @@ dependencies {
     modInclude("api-screen-handler")
     bloated("auto-config")
     intransitive("mod-menu")
+    mod("curse.maven:betterslabs-407645:3158336")
 }

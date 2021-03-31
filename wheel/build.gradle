@@ -1,11 +1,10 @@
 plugins {
     id("maven-publish")
     id("java-gradle-plugin")
-    id("com.jfrog.bintray").version("1.8.5")
 }
 
-project.group = "user11681"
-project.version = "snapshot"
+group("user11681")
+version("0.0.0")
 
 sourceCompatibility = 15
 targetCompatibility = 15
@@ -13,24 +12,25 @@ targetCompatibility = 15
 gradlePlugin {
     plugins {
         wheel {
-            id = "wheel"
+            id = "user11681.wheel"
             implementationClass = "user11681.wheel.WheelPlugin"
         }
     }
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
+    gradlePluginPortal()
 
-    maven {url = "https://dl.bintray.com/user11681/maven"}
+    maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
     maven {url = "https://maven.fabricmc.net"}
 }
 
 dependencies {
+    api("net.fabricmc:fabric-loom:latest.release")
     api("net.gudenau.lib:unsafe:latest.release")
     api("user11681:reflect:latest.release")
-    api("com.jfrog.bintray.gradle:gradle-bintray-plugin:latest.release")
-    api("net.fabricmc:fabric-loom:0.6-SNAPSHOT")
+    api("org.jfrog.buildinfo:build-info-extractor-gradle:latest.release")
 
     compileOnly("org.jetbrains:annotations:latest.release")
 
@@ -42,45 +42,20 @@ java {
 }
 
 jar {
-    from(project.file("LICENSE"))
-}
-
-tasks.bintrayUpload.doFirst {
-//    HttpClient client = HttpClient.newBuilder().authenticator(Authenticator.)
+    from(file("LICENSE"))
 }
 
 publishing {
-    publications {
-//        maven(MavenPublication) {
-//            artifactId = project.name
-//            groupId = project.group
-//            version = project.version
-
-//            from(components.java)
-//        }
-    }
-
     repositories {
         mavenLocal()
-    }
-}
 
-bintray {
-    user = System.getenv("BINTRAY_USER")
-    key = System.getenv("BINTRAY_API_KEY")
-    publications = ["maven"]
-    publish = true
+        maven {
+            url = "https://auoeke.jfrog.io/artifactory/maven"
 
-    pkg {
-        repo = "maven"
-        name = project.name
-        licenses = ["LGPL-3.0"]
-        vcsUrl = "https://github.com/user11681/${project.name}.git"
-
-        version {
-            name = project.version
-            released = new Date()
-            issueTrackerUrl = "https://github.com/user11681/${project.name}/issues"
+            credentials {
+                username(System.env.ARTIFACTORY_USERNAME)
+                password(System.env.ARTIFACTORY_PASSWORD)
+            }
         }
     }
 }

@@ -1,40 +1,19 @@
 package user11681.wheel.dependency;
 
-import java.util.Set;
-
 import user11681.wheel.WheelExtension;
 
 public class DependencyEntry {
+    public final String key;
     public final String artifact;
+    public final String repository;
 
-    private String repository;
-    private Set<String> keys;
-
-    public DependencyEntry(String artifact) {
+    public DependencyEntry(String key, String artifact, String repository) {
         this.artifact = artifact;
+        this.key = key;
+        this.repository = repository;
     }
 
     public String resolveRepository() {
         return WheelExtension.repository(this.repository);
-    }
-
-    public String repository() {
-        return this.repository;
-    }
-
-    public DependencyEntry repository(String repository) {
-        this.repository = repository;
-
-        return this;
-    }
-
-    public Set<String> key() {
-        return keys;
-    }
-
-    public DependencyEntry key(String... keys) {
-        this.keys = Set.of(keys);
-
-        return this;
     }
 }

@@ -1,34 +1,21 @@
 package user11681.wheel.dependency;
 
 import java.util.Map;
-
-import org.gradle.api.artifacts.ClientModule;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.DependencyConstraint;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
-import org.gradle.api.capabilities.Capability;
 import org.gradle.api.internal.artifacts.DefaultDependencyFactory;
-import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
-import org.gradle.api.internal.notations.ProjectDependencyFactory;
-import org.gradle.internal.typeconversion.NotationParser;
 import user11681.reflect.Classes;
-
-import user11681.wheel.WheelExtension;
 import user11681.wheel.ProjectHandler;
+import user11681.wheel.WheelExtension;
 
+@SuppressWarnings("ConstantConditions")
 public class WheelDependencyFactory extends DefaultDependencyFactory {
     public static final long classPointer = Classes.getClassPointer(WheelDependencyFactory.class);
 
-    public WheelDependencyFactory(
-        NotationParser<Object, Dependency> dependencyNotationParser,
-        NotationParser<Object, DependencyConstraint> dependencyConstraintNotationParser,
-        NotationParser<Object, ClientModule> clientModuleNotationParser,
-        NotationParser<Object, Capability> capabilityNotationParser,
-        ProjectDependencyFactory projectDependencyFactory,
-        ImmutableAttributesFactory attributesFactory) {
-        super(dependencyNotationParser, dependencyConstraintNotationParser, clientModuleNotationParser, capabilityNotationParser, projectDependencyFactory, attributesFactory);
+    public WheelDependencyFactory() {
+        super(null, null, null, null, null, null);
     }
 
     private static String changeVersion(String artifact, String version) {
@@ -39,45 +26,57 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
         return String.join(":", segments);
     }
 
-    @Override
-    public Dependency createDependency(Object dependencyNotation) {
-        if (dependencyNotation instanceof String) {
-            return super.createDependency(resolve((String) dependencyNotation));
+    private static void addRepository(String repository) {
+        if (ProjectHandler.currentProject != null && repository != null) {
+            RepositoryHandler repositories = ProjectHandler.currentProject.getRepositories();
+
+            for (ArtifactRepository artifactRepository : repositories) {
+                if (artifactRepository instanceof MavenArtifactRepository && repository.equals(((MavenArtifactRepository) artifactRepository).getUrl().toString())) {
+                    return;
+                }
+            }
+
+            repositories.maven((MavenArtifactRepository artifactRepository) -> artifactRepository.setUrl(repository));
+        }
+    }
+
+    private static boolean addRepository(DependencyEntry entry) {
+        if (entry != null) {
+            addRepository(entry.resolveRepository());
+
+            return true;
         }
 
-        return super.createDependency(dependencyNotation);
+        return false;
     }
 
     private static Object resolve(String dependency) {
+        if (dependency.startsWith("curse.maven:")) {
+            addRepository(WheelExtension.repository("curse-maven"));
+
+            return dependency;
+        }
+
+        if (dependency.startsWith("com.github.")) {
+            addRepository(WheelExtension.repository("jitpack"));
+
+            return dependency;
+        }
+
         String[] components = dependency.split(":");
 
         if (components.length == 2) {
-            DependencyEntry info = WheelExtension.dependency(components[0]);
+            DependencyEntry entry = WheelExtension.dependency(components[0]);
 
-            if (info != null) {
-                return changeVersion(info.artifact, components[1]);
+            if (addRepository(entry)) {
+                return changeVersion(entry.artifact, components[1]);
             }
         }
 
-        DependencyEntry value = WheelExtension.dependency(dependency);
+        DependencyEntry entry = WheelExtension.dependency(dependency);
 
-        if (value != null) {
-            repository:
-            if (ProjectHandler.currentProject != null && value.repository() != null) {
-                RepositoryHandler repositories = ProjectHandler.currentProject.getRepositories();
-
-                for (ArtifactRepository repository : repositories) {
-                    if (value.artifact.equals(repository.getName())
-                        || repository instanceof MavenArtifactRepository
-                        && value.resolveRepository().equals(((MavenArtifactRepository) repository).getUrl().toString())) {
-                        break repository;
-                    }
-                }
-
-                repositories.maven((MavenArtifactRepository repository) -> repository.setUrl(value.resolveRepository()));
-            }
-
-            return value.artifact;
+        if (addRepository(entry)) {
+            return entry.artifact;
         }
 
         if (ProjectHandler.currentProject != null && ProjectHandler.currentProject.findProject(dependency) != null) {
@@ -85,5 +84,14 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
         }
 
         return dependency;
+    }
+
+    @Override
+    public Dependency createDependency(Object dependencyNotation) {
+        if (dependencyNotation instanceof String) {
+            return super.createDependency(resolve((String) dependencyNotation));
+        }
+
+        return super.createDependency(dependencyNotation);
     }
 }

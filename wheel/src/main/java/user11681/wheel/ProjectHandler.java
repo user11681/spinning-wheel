@@ -23,15 +23,11 @@
  */
 package user11681.wheel;
 
-import com.jfrog.bintray.gradle.BintrayExtension;
-import com.jfrog.bintray.gradle.BintrayPlugin;
-import com.jfrog.bintray.gradle.tasks.BintrayUploadTask;
 import java.io.File;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -39,9 +35,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.fabricmc.loom.LoomGradleExtension;
 import net.fabricmc.loom.LoomGradlePlugin;
-import net.fabricmc.loom.task.RunClientTask;
-import net.fabricmc.loom.task.RunServerTask;
+import net.fabricmc.loom.configuration.ide.RunConfigSettings;
+import net.fabricmc.loom.task.RunGameTask;
 import net.gudenau.lib.unsafe.Unsafe;
+import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
@@ -49,6 +46,9 @@ import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
+import org.gradle.api.artifacts.repositories.PasswordCredentials;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileCopyDetails;
 import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.invocation.Gradle;
@@ -65,12 +65,13 @@ import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.publish.plugins.PublishingPlugin;
-import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.language.jvm.tasks.ProcessResources;
 import org.intellij.lang.annotations.Language;
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin;
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 import user11681.reflect.Accessor;
 import user11681.reflect.Classes;
 import user11681.wheel.dependency.WheelDependencyFactory;
@@ -104,6 +105,7 @@ public class ProjectHandler {
     public final WheelExtension extension;
 
     public LoomGradleExtension loom;
+    public NamedDomainObjectContainer<RunConfigSettings> runConfigs;
 
     public ProjectHandler(Project project) {
         this.project = project;
@@ -121,10 +123,6 @@ public class ProjectHandler {
         this.gradle = project.getGradle();
         this.buildScript = project.getBuildscript();
         this.extension = this.extensions.create("wheel", WheelExtension.class);
-    }
-
-    public static boolean isRootProject(Project project) {
-        return project.getRootProject() == project;
     }
 
     private static String sendGET(String uri, @Language("RegExp") String pattern, Function<String, String> thing) {
@@ -174,9 +172,9 @@ public class ProjectHandler {
 
         this.plugins.apply(JavaLibraryPlugin.class);
         this.plugins.apply(MavenPublishPlugin.class);
-        this.plugins.apply(BintrayPlugin.class);
+        this.plugins.apply(ArtifactoryPlugin.class);
 
-        this.tasks.getByName(BintrayUploadTask.getTASK_NAME()).dependsOn(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME);
+        this.tasks.withType(ArtifactoryTask.class).forEach((ArtifactoryTask task) -> task.dependsOn(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME));
 
         Classes.staticCast(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.classPointer);
         Classes.staticCast(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.classPointer);
@@ -190,8 +188,6 @@ public class ProjectHandler {
             this.plugins.apply("fabric-loom");
         } catch (UnknownPluginException exception) {
             this.plugins.apply(LoomGradlePlugin.class);
-//            this.buildScript.getRepositories().maven((MavenArtifactRepository repository) -> repository.setUrl("https://maven.fabricmc.net"));
-//            this.buildScript.getDependencies().add("classpath", "net.fabricmc:fabric-loom:latest.release");
         }
 
         this.repositories.mavenLocal();
@@ -205,6 +201,7 @@ public class ProjectHandler {
 
     private void afterEvaluate() {
         this.loom = this.extensions.getByType(LoomGradleExtension.class);
+        this.runConfigs = this.loom.getRunConfigs();
 
         this.checkMinecraftVersion();
         this.checkYarnBuild();
@@ -214,7 +211,7 @@ public class ProjectHandler {
         this.dependencies.add("mod", "net.fabricmc:fabric-loader:latest.release");
         this.dependencies.add("testImplementation", "org.junit.jupiter:junit-jupiter:latest.release");
 
-        if (this.extension.noSpam) {
+        if (this.extension.nospam) {
             this.dependencies.add("modApi", "narratoroff");
             this.dependencies.add("modApi", "noauth");
         }
@@ -253,41 +250,40 @@ public class ProjectHandler {
 //            task.getArchiveFileName().set(String.format("%s-%s.jar", project.getName(), project.getVersion()));
 //        }
 
-        if (this.extension.publish()) {
+        FileCollection testClasspath = this.convention.getPlugin(JavaPluginConvention.class).getSourceSets().getByName("test").getRuntimeClasspath();
+
+        this.runConfigs.create("testClient", RunConfigSettings::client);
+        this.runConfigs.create("testServer", RunConfigSettings::client);
+        ((RunGameTask) this.tasks.getByName("runTestClient")).classpath(testClasspath);
+        ((RunGameTask) this.tasks.getByName("runTestServer")).classpath(testClasspath);
+
+        if (this.extension.publish.enabled) {
             PublishingExtension publishing = this.extensions.getByType(PublishingExtension.class);
 
-            publishing.getPublications().create("maven", MavenPublication.class, (MavenPublication publication) -> {
-                publication.setGroupId(String.valueOf(this.project.getGroup()));
-                publication.setArtifactId(this.project.getName());
-                publication.setVersion(String.valueOf(this.project.getVersion()));
+            if (this.extension.publish.publication.enabled) {
+                publishing.getPublications().create(this.extension.publish.publication.name, MavenPublication.class, (MavenPublication publication) -> {
+                    publication.setGroupId(String.valueOf(this.project.getGroup()));
+                    publication.setArtifactId(this.project.getName());
+                    publication.setVersion(String.valueOf(this.project.getVersion()));
 
-                publication.artifact(remapJar).builtBy(remapJar);
-                publication.artifact(this.tasks.getByName("sourcesJar")).builtBy(this.tasks.getByName("remapSourcesJar"));
-            });
+                    publication.artifact(remapJar).builtBy(remapJar);
+                    publication.artifact(this.tasks.getByName("sourcesJar")).builtBy(this.tasks.getByName("remapSourcesJar"));
+                });
+            }
 
-            publishing.getRepositories().mavenLocal();
+            if (this.extension.publish.local) {
+                publishing.getRepositories().mavenLocal();
+            }
 
-            SourceSet testSet = this.convention.getPlugin(JavaPluginConvention.class).getSourceSets().getByName("test");
+            if (this.extension.publish.external.enabled) {
+                publishing.getRepositories().maven((MavenArtifactRepository repository) -> {
+                    repository.setUrl(this.extension.publish.external.repository);
 
-            this.tasks.create("runTestClient", RunClientTask.class).classpath(testSet.getRuntimeClasspath());
-            this.tasks.create("runTestServer", RunServerTask.class).classpath(testSet.getRuntimeClasspath());
-
-            if (this.extension.bintray()) {
-                BintrayExtension bintray = this.extensions.getByType(BintrayExtension.class);
-                bintray.setUser(System.getenv("BINTRAY_USER"));
-                bintray.setKey(System.getenv("BINTRAY_API_KEY"));
-                bintray.setPublications("maven");
-                bintray.setPublish(true);
-
-                BintrayExtension.PackageConfig pkg = bintray.getPkg();
-                pkg.setRepo("maven");
-                pkg.setName(project.getName());
-                pkg.setLicenses("LGPL-3.0");
-                pkg.setVcsUrl(String.format("https://github.com/%s/%s", project.getGroup(), project.getName()));
-
-                BintrayExtension.VersionConfig version = pkg.getVersion();
-                version.setName(String.valueOf(project.getVersion()));
-                version.setReleased(new Date().toString());
+                    repository.credentials(((PasswordCredentials credentials) -> {
+                        credentials.setUsername(this.extension.publish.external.username);
+                        credentials.setPassword(this.extension.publish.external.password);
+                    }));
+                });
             }
         }
     }
