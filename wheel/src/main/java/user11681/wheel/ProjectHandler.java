@@ -201,29 +201,29 @@ public class ProjectHandler {
         this.checkYarnBuild();
 
         this.dependencies.add("minecraft", "com.mojang:minecraft:" + this.extension.minecraftVersion);
-        this.dependencies.add("mappings", String.format("net.fabricmc:yarn:%s+build.%s:v2", this.extension.minecraftVersion, this.extension.yarnBuild));
+        this.dependencies.add("mappings", "net.fabricmc:yarn:%s+build.%s:v2".formatted(this.extension.minecraftVersion, this.extension.yarnBuild));
         this.dependencies.add("mod", "net.fabricmc:fabric-loader:latest.release");
         this.dependencies.add("testImplementation", "org.junit.jupiter:junit-jupiter:latest.release");
 
         if (this.extension.nospam) {
-            this.dependencies.add("modApi", "narratoroff");
+            this.dependencies.add("modApi", "narrator-off");
             this.dependencies.add("modApi", "noauth");
-        }
-
-        for (JavaCompile task : this.tasks.withType(JavaCompile.class)) {
-            task.getOptions().setEncoding("UTF-8");
-
-            task.setSourceCompatibility(this.extension.javaVersion.toString());
-            task.setTargetCompatibility(task.getSourceCompatibility());
         }
 
         this.extensions.getByType(JavaPluginExtension.class).withSourcesJar();
 
-        for (Jar task : this.tasks.withType(Jar.class)) {
+        this.tasks.withType(JavaCompile.class).forEach((JavaCompile task) -> {
+            task.getOptions().setEncoding("UTF-8");
+
+            task.setSourceCompatibility(this.extension.javaVersion.toString());
+            task.setTargetCompatibility(task.getSourceCompatibility());
+        });
+
+        this.tasks.withType(Jar.class).forEach((Jar task) -> {
 //            task.getArchiveClassifier().set("dev");
 
             task.from("LICENSE");
-        }
+        });
 
         final Task remapJar = this.tasks.getByName("remapJar");
 
