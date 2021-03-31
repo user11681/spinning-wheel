@@ -46,7 +46,8 @@ public class WheelExtension {
         dependencies.repository("cursemaven", "https://www.cursemaven.com")
             .dependency("aquarius", "curse.maven:aquarius-301299:3132504")
             .dependency("charm", "curse.maven:charm-318872:3140951")
-            .dependency("moenchantments", "curse.maven:moenchantments-320806:3084973");
+            .dependency("moenchantments", "curse.maven:moenchantments-320806:3084973")
+            .dependency("better-slabs", "curse.maven:betterslabs-407645:3158336");
         dependencies.repository("dblsaiko", "https://maven.dblsaiko.net/");
         dependencies.repository("earthcomputer", "https://dl.bintray.com/earthcomputer/mods")
             .dependency("multiconnect", "net.earthcomputer:multiconnect:latest.release:api");

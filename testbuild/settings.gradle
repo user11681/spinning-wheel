@@ -1,9 +1,10 @@
 pluginManagement {
     repositories {
         mavenCentral()
-        gradlePluginPortal()
 
-        maven {url = "https://dl.bintray.com/user11681/maven"}
+        maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
         maven {url = "https://maven.fabricmc.net"}
     }
 }
+
+includeBuild("..")

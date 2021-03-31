@@ -15,5 +15,5 @@ dependencies {
     modInclude("api-screen-handler")
     bloated("auto-config")
     intransitive("mod-menu")
-    mod("curse.maven:betterslabs-407645:3158336")
+    mod("better-slabs")
 }
