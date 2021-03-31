@@ -1,11 +1,12 @@
 package user11681.wheel;
 
 import groovy.lang.Closure;
-import org.gradle.api.JavaVersion;
+import org.gradle.api.plugins.Convention;
 import org.gradle.util.ConfigureUtil;
 import user11681.wheel.dependency.Dependency;
 import user11681.wheel.dependency.RepositoryContainer;
 import user11681.wheel.publish.PublishingConfig;
+import user11681.wheel.util.Compatibility;
 
 public class WheelExtension {
     public PublishingConfig publish = new PublishingConfig();
@@ -15,7 +16,11 @@ public class WheelExtension {
     public String minecraftVersion;
     public String yarnBuild;
 
-    public JavaVersion javaVersion = JavaVersion.VERSION_1_8;
+    public Compatibility javaVersion;
+
+    public WheelExtension(Convention convention) {
+        this.javaVersion = new Compatibility(convention);
+    }
 
     public static final RepositoryContainer dependencies = new RepositoryContainer((RepositoryContainer dependencies) -> {
         dependencies.repository("auoeke", "https://auoeke.jfrog.io/artifactory/maven")
@@ -41,6 +46,7 @@ public class WheelExtension {
             .dependency("cotton-resources", "io.github.cottonmc:cotton-resources:latest.release");
         dependencies.repository("buildcraft", "https://mod-buildcraft.com/maven");
         dependencies.repository("central", "https://repo.maven.apache.org/maven2/")
+            .dependency("jabel", "com.github.bsideup.jabel:jabel-javac-plugin:latest.release")
             .dependency("junit", "org.junit.jupiter:junit-jupiter:latest.release")
             .dependency("toml4j", "com.moandjiezana.toml:toml4j:latest.release");
         dependencies.repository("cursemaven", "https://www.cursemaven.com")
@@ -113,7 +119,12 @@ public class WheelExtension {
         this.publish.enabled = enabled;
     }
 
+    public void javaVersion(Closure<?> closure) {
+        ConfigureUtil.configure(closure, this.javaVersion);
+    }
+
     public void setJavaVersion(Object version) {
-        this.javaVersion = JavaVersion.toVersion(version);
+        this.javaVersion.setSource(version);
+        this.javaVersion.setTarget(version);
     }
 }

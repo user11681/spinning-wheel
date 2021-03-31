@@ -119,7 +119,7 @@ public class ProjectHandler {
         this.logger = project.getLogger();
         this.gradle = project.getGradle();
         this.buildScript = project.getBuildscript();
-        this.extension = this.extensions.create("wheel", WheelExtension.class);
+        this.extension = this.extensions.create("wheel", WheelExtension.class, this.convention);
     }
 
     private static String sendGET(String uri, @Language("RegExp") String pattern, Function<String, String> thing) {
@@ -214,9 +214,6 @@ public class ProjectHandler {
 
         this.tasks.withType(JavaCompile.class).forEach((JavaCompile task) -> {
             task.getOptions().setEncoding("UTF-8");
-
-            task.setSourceCompatibility(this.extension.javaVersion.toString());
-            task.setTargetCompatibility(task.getSourceCompatibility());
         });
 
         this.tasks.withType(Jar.class).forEach((Jar task) -> {
