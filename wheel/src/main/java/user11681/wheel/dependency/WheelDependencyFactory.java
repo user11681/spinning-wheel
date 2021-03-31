@@ -1,7 +1,6 @@
 package user11681.wheel.dependency;
 
 import java.util.Map;
-import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
@@ -40,7 +39,7 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
         }
     }
 
-    private static boolean addRepository(DependencyEntry entry) {
+    private static boolean addRepository(Dependency entry) {
         if (entry != null) {
             addRepository(entry.resolveRepository());
 
@@ -66,14 +65,14 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
         String[] components = dependency.split(":");
 
         if (components.length == 2) {
-            DependencyEntry entry = WheelExtension.dependency(components[0]);
+            Dependency entry = WheelExtension.dependency(components[0]);
 
             if (addRepository(entry)) {
                 return changeVersion(entry.artifact, components[1]);
             }
         }
 
-        DependencyEntry entry = WheelExtension.dependency(dependency);
+        Dependency entry = WheelExtension.dependency(dependency);
 
         if (addRepository(entry)) {
             return entry.artifact;
@@ -87,7 +86,7 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
     }
 
     @Override
-    public Dependency createDependency(Object dependencyNotation) {
+    public org.gradle.api.artifacts.Dependency createDependency(Object dependencyNotation) {
         if (dependencyNotation instanceof String) {
             return super.createDependency(resolve((String) dependencyNotation));
         }

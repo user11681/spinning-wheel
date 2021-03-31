@@ -3,7 +3,7 @@ package user11681.wheel;
 import groovy.lang.Closure;
 import org.gradle.api.JavaVersion;
 import org.gradle.util.ConfigureUtil;
-import user11681.wheel.dependency.DependencyEntry;
+import user11681.wheel.dependency.Dependency;
 import user11681.wheel.dependency.RepositoryContainer;
 import user11681.wheel.publish.PublishingConfig;
 
@@ -17,7 +17,7 @@ public class WheelExtension {
 
     public JavaVersion javaVersion = JavaVersion.VERSION_1_8;
 
-    private static final RepositoryContainer dependencies = new RepositoryContainer((RepositoryContainer dependencies) -> {
+    public static final RepositoryContainer dependencies = new RepositoryContainer((RepositoryContainer dependencies) -> {
         dependencies.repository("auoeke", "https://auoeke.jfrog.io/artifactory/maven")
             .dependency("bason", "user11681:bason:latest.release")
             .dependency("cell", "user11681:cell:latest.release")
@@ -55,7 +55,6 @@ public class WheelExtension {
             .dependency("api-base", "net.fabricmc.fabric-api:fabric-api-base:latest.release")
             .dependency("api-block-render-layer", "net.fabricmc.fabric-api:fabric-blockrenderlayer-v1:latest.release")
             .dependency("api-command", "net.fabricmc.fabric-api:fabric-command-api-v1:latest.release")
-            .dependency("api-screen-handler", "net.fabricmc.fabric-api:fabric-screen-handler-api-v1:latest.release")
             .dependency("api-events-interaction", "net.fabricmc.fabric-api:fabric-events-interaction-v0:latest.release")
             .dependency("api-key-bindings", "net.fabricmc.fabric-api:fabric-key-binding-api-v1:latest.release")
             .dependency("api-lifecycle-events", "net.fabricmc.fabric-api:fabric-lifecycle-events-v1:latest.release")
@@ -63,6 +62,7 @@ public class WheelExtension {
             .dependency("api-renderer-api", "net.fabricmc.fabric-api:fabric-renderer-api-v1:latest.release")
             .dependency("api-renderer-indigo", "net.fabricmc.fabric-api:fabric-renderer-indigo:latest.release")
             .dependency("api-resource-loader", "net.fabricmc.fabric-api:fabric-resource-loader-v0:latest.release")
+            .dependency("api-screen-handler", "net.fabricmc.fabric-api:fabric-screen-handler-api-v1:latest.release")
             .dependency("api-tag-extensions", "net.fabricmc.fabric-api:fabric-tag-extensions-v0:latest.release");
         dependencies.repository("grossfabrichackers", "https://raw.githubusercontent.com/GrossFabricHackers/maven/master");
         dependencies.repository("halfof2", "https://raw.githubusercontent.com/Devan-Kerman/Devan-Repo/master")
@@ -99,7 +99,7 @@ public class WheelExtension {
         dependencies.putRepository(key, value);
     }
 
-    public static DependencyEntry dependency(String key) {
+    public static Dependency dependency(String key) {
         return dependencies.entry(key);
     }
 

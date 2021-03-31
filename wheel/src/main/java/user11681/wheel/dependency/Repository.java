@@ -2,11 +2,12 @@ package user11681.wheel.dependency;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Repository {
     public final String key;
     public final String url;
-    public final List<DependencyEntry> dependencies = new ArrayList<>();
+    public final List<Dependency> dependencies = new ArrayList<>();
 
     public Repository(String key, String url) {
         this.key = key;
@@ -14,9 +15,27 @@ public class Repository {
     }
 
     public Repository dependency(String key, String artifact) {
-        this.dependencies.add(new DependencyEntry(key, artifact, this.key));
+        this.dependencies.add(new Dependency(key, artifact, this.key));
 
         return this;
+    }
+
+    @Override
+    public String toString() {
+        boolean multiline = this.dependencies.size() > 1;
+        StringBuilder string = new StringBuilder(this.key).append(": {");
+
+        if (multiline) {
+            string.append("\n\t");
+        }
+
+        string.append(this.dependencies.stream().map(Dependency::toString).collect(Collectors.joining("\n\t")));
+
+        if (multiline) {
+            string.append('\n');
+        }
+
+        return string.append('}').toString();
     }
 
     @Override
