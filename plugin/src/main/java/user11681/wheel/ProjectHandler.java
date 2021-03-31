@@ -184,6 +184,9 @@ public class ProjectHandler {
             this.plugins.apply(LoomGradlePlugin.class);
         }
 
+        this.extension.javaVersion.setSource(8);
+        this.extension.javaVersion.setTarget(8);
+
         this.repositories.mavenLocal();
 
         this.configureConfigurations();

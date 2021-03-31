@@ -9,9 +9,6 @@ public class Compatibility {
 
     public Compatibility(Convention convention) {
         this.convention = convention;
-
-        this.setSource(8);
-        this.setTarget(8);
     }
 
     public JavaVersion getSource() {
