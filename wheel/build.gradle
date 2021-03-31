@@ -6,8 +6,8 @@ plugins {
 group("user11681")
 version("0.0.0")
 
-sourceCompatibility = 15
-targetCompatibility = 15
+sourceCompatibility = 16
+targetCompatibility = 16
 
 gradlePlugin {
     plugins {

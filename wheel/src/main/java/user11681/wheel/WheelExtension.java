@@ -110,6 +110,10 @@ public class WheelExtension {
         ConfigureUtil.configure(closure, this.publish);
     }
 
+    public void setPublish(boolean publish) {
+        this.publish.enabled = publish;
+    }
+
     public void setJavaVersion(Object version) {
         this.javaVersion = JavaVersion.toVersion(version);
     }
