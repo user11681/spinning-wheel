@@ -14,7 +14,15 @@ public class PublishingConfig {
         ConfigureUtil.configure(closure, this.external);
     }
 
+    public void setExternal(boolean enabled) {
+        this.external.enabled = enabled;
+    }
+
     public void publication(Closure<?> closure) {
         ConfigureUtil.configure(closure, this.publication);
+    }
+
+    public void setPublication(boolean enabled) {
+        this.publication.enabled = enabled;
     }
 }

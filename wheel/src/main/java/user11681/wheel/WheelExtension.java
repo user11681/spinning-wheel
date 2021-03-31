@@ -110,8 +110,8 @@ public class WheelExtension {
         ConfigureUtil.configure(closure, this.publish);
     }
 
-    public void setPublish(boolean publish) {
-        this.publish.enabled = publish;
+    public void setPublish(boolean enabled) {
+        this.publish.enabled = enabled;
     }
 
     public void setJavaVersion(Object version) {
