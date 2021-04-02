@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    api("net.fabricmc:fabric-loom:latest.release")
+    api("net.fabricmc:fabric-loom:0.7-SNAPSHOT")
     api("net.gudenau.lib:unsafe:latest.release")
     api("user11681:reflect:latest.release")
 
