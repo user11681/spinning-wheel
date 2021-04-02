@@ -32,7 +32,7 @@ public class WheelExtension {
             .dependency("huntingham-hills", "user11681:fabricasmtools:latest.release")
             .dependency("invisible-living-entities", "user11681:invisiblelivingentities:latest.release")
             .dependency("limitless", "user11681:limitless:latest.release")
-            .dependency("narrator-off", "user11681:narratoroff:latest.release")
+            .dependency("narrator-off", "user11681:narrator-off:latest.release")
             .dependency("noauth", "user11681:noauth:latest.release")
             .dependency("optional", "user11681:optional:latest.release")
             .dependency("phormat", "user11681:phormat:latest.release")
