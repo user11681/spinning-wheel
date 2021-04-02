@@ -9,7 +9,7 @@ public class WheelRepositoryFactory extends DefaultBaseRepositoryFactory {
 	public static final long classPointer = Classes.getClassPointer(WheelRepositoryFactory.class);
 
     public WheelRepositoryFactory() {
-        super(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        super(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     @Override

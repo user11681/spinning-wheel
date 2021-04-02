@@ -4,10 +4,7 @@ plugins {
 }
 
 group("user11681")
-version("-SNAPSHOT")
-
-sourceCompatibility = 16
-targetCompatibility = 16
+version("0-SNAPSHOT")
 
 gradlePlugin {
     plugins {
@@ -33,10 +30,6 @@ dependencies {
     compileOnly("org.jetbrains:annotations:latest.release")
 
     testImplementation("org.junit.jupiter:junit-jupiter:latest.release")
-
-    api("org.ow2.asm:asm:latest.release")
-    api("org.ow2.asm:asm-tree:latest.release")
-    api("net.bytebuddy:byte-buddy-agent:latest.release")
 }
 
 java {
