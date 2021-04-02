@@ -1,8 +1,8 @@
 pluginManagement {
     repositories {
         mavenCentral()
-
-        maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
         maven {url = "https://maven.fabricmc.net"}
+        mavenLocal()
+        maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
     }
 }

@@ -1,5 +1,6 @@
 plugins {
-    id("user11681.wheel")
+    id("wheel").version("-SNAPSHOT")
+    id("java-library")
 }
 
 group("user11681")
@@ -16,8 +17,9 @@ wheel {
     }
 }
 
-println(sourceCompatibility)
-println(targetCompatibility)
+repositories {
+    mavenLocal()
+}
 
 dependencies {
     mod("arrp")
@@ -26,6 +28,4 @@ dependencies {
     bloated("auto-config")
     intransitive("mod-menu")
     mod("better-slabs")
-
-    annotationProcessor("jabel")
 }

@@ -1,5 +1,63 @@
 plugins {
+    id("java-gradle-plugin")
     id("maven-publish")
 }
 
-tasks.publish.dependsOn(gradle.includedBuild("plugin").gradle.rootProject.tasks.publish)
+group("user11681")
+version("-SNAPSHOT")
+
+sourceCompatibility = 16
+targetCompatibility = 16
+
+gradlePlugin {
+    plugins {
+        wheel {
+            id = "wheel"
+            implementationClass = "user11681.wheel.WheelPlugin"
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+
+    maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
+    maven {url = "https://maven.fabricmc.net"}
+}
+
+dependencies {
+    api("net.fabricmc:fabric-loom:latest.release")
+    api("net.gudenau.lib:unsafe:latest.release")
+    api("user11681:reflect:latest.release")
+
+    compileOnly("org.jetbrains:annotations:latest.release")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:latest.release")
+
+    api("org.ow2.asm:asm:latest.release")
+    api("org.ow2.asm:asm-tree:latest.release")
+    api("net.bytebuddy:byte-buddy-agent:latest.release")
+}
+
+java {
+    withSourcesJar()
+}
+
+jar {
+    from(file("LICENSE"))
+}
+
+publishing {
+    repositories {
+        mavenLocal()
+
+        maven {
+            url("https://auoeke.jfrog.io/artifactory/maven")
+
+            credentials {
+                username(System.env.ARTIFACTORY_USERNAME)
+                password(System.env.ARTIFACTORY_PASSWORD)
+            }
+        }
+    }
+}
