@@ -1,4 +1,4 @@
-package user11681.wheel.publish;
+package user11681.wheel.extension.publish;
 
 public class ExternalRepositoryConfig {
     public boolean enabled = true;

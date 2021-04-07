@@ -1,4 +1,4 @@
-package user11681.wheel.util;
+package user11681.wheel.extension;
 
 import org.gradle.api.JavaVersion;
 import org.gradle.api.plugins.Convention;
@@ -16,7 +16,7 @@ public class Compatibility {
     }
 
     public void setSource(Object source) {
-        this.convention().setSourceCompatibility(source);
+        this.convention().setSourceCompatibility(source == null ? JavaVersion.current() : source);
     }
 
     public JavaVersion getTarget() {
@@ -24,7 +24,7 @@ public class Compatibility {
     }
 
     public void setTarget(Object target) {
-        this.convention().setTargetCompatibility(target);
+        this.convention().setTargetCompatibility(target == null ? JavaVersion.current() : target);
     }
 
     private JavaPluginConvention convention() {

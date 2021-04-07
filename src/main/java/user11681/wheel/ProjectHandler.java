@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 import net.fabricmc.loom.LoomGradleExtension;
 import net.fabricmc.loom.LoomGradlePlugin;
 import net.fabricmc.loom.configuration.ide.RunConfigSettings;
+import net.fabricmc.loom.task.GenerateSourcesTask;
 import net.fabricmc.loom.task.RunGameTask;
 import net.gudenau.lib.unsafe.Unsafe;
 import org.gradle.api.NamedDomainObjectContainer;
@@ -71,9 +72,11 @@ import org.gradle.language.jvm.tasks.ProcessResources;
 import org.intellij.lang.annotations.Language;
 import user11681.reflect.Accessor;
 import user11681.reflect.Classes;
+import user11681.reflect.Invoker;
 import user11681.wheel.dependency.WheelDependencyFactory;
 import user11681.wheel.dependency.configuration.BloatedDependencySet;
 import user11681.wheel.dependency.configuration.IntransitiveDependencySet;
+import user11681.wheel.extension.WheelExtension;
 import user11681.wheel.repository.WheelRepositoryFactory;
 
 @SuppressWarnings({"ResultOfMethodCallIgnored", "UnstableApiUsage"})
@@ -173,7 +176,7 @@ public class ProjectHandler {
         Classes.staticCast(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.classPointer);
         Classes.staticCast(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.classPointer);
 
-//        this.configurations.create("dev");
+        //        this.configurations.create("dev");
 
         this.project.beforeEvaluate(ignored -> this.beforeEvaluate());
         this.project.afterEvaluate(ignored -> this.afterEvaluate());
@@ -213,19 +216,29 @@ public class ProjectHandler {
             this.dependencies.add("modApi", "noauth");
         }
 
-        this.extensions.getByType(JavaPluginExtension.class).withSourcesJar();
+        this.tasks.whenObjectAdded((Task task) -> {
+            if (task.getName().equals(this.extension.genSources)) try {
+                if (!((File) Invoker.bind(task, "getMappedJarFileWithSuffix", File.class, String.class).invoke("-sources.jar")).exists()) {
+                    this.logger.info("sources not found; running genSources");
 
-        this.tasks.withType(JavaCompile.class).forEach((JavaCompile task) -> {
-            task.getOptions().setEncoding("UTF-8");
+                    ((GenerateSourcesTask) task).doTask();
+                }
+            } catch (Throwable throwable) {
+                Unsafe.throwException(throwable);
+            }
         });
 
+        this.extensions.getByType(JavaPluginExtension.class).withSourcesJar();
+
+        this.tasks.withType(JavaCompile.class).forEach((JavaCompile task) -> task.getOptions().setEncoding("UTF-8"));
+
         this.tasks.withType(Jar.class).forEach((Jar task) -> {
-//            task.getArchiveClassifier().set("dev");
+            //            task.getArchiveClassifier().set("dev");
 
             task.from("LICENSE");
         });
 
-        final Task remapJar = this.tasks.getByName("remapJar");
+        Task remapJar = this.tasks.getByName("remapJar");
 
         remapJar.doLast((Task remapTask) -> remapTask.getInputs().getFiles().filter((File file) -> file.getName().endsWith(".jar")).forEach(File::delete));
 
@@ -233,16 +246,16 @@ public class ProjectHandler {
         processResources.getInputs().property("version", this.project.getVersion());
         processResources.filesMatching("fabric.mod.json", (FileCopyDetails details) -> details.expand(new HashMap<>(Map.of("version", project.getVersion()))));
 
-//        File devJar = project.file(String.format("%s/libs/%s-%s-dev.jar", this.project.getBuildDir(), this.project.getName(), this.project.getVersion()));
+        //        File devJar = project.file(String.format("%s/libs/%s-%s-dev.jar", this.project.getBuildDir(), this.project.getName(), this.project.getVersion()));
 
-//        this.artifacts.add("dev", devJar, (ConfigurablePublishArtifact artifact) -> artifact.builtBy(tasks.getByName("jar")).setType("jar"));
+        //        this.artifacts.add("dev", devJar, (ConfigurablePublishArtifact artifact) -> artifact.builtBy(tasks.getByName("jar")).setType("jar"));
 
-//        if (devJar.exists()) {
-//            RemapJarTask task = (RemapJarTask) tasks.getByName("remapJar");
-//
-//            task.getInput().set(devJar);
-//            task.getArchiveFileName().set(String.format("%s-%s.jar", project.getName(), project.getVersion()));
-//        }
+        //        if (devJar.exists()) {
+        //            RemapJarTask task = (RemapJarTask) tasks.getByName("remapJar");
+        //
+        //            task.getInput().set(devJar);
+        //            task.getArchiveFileName().set(String.format("%s-%s.jar", project.getName(), project.getVersion()));
+        //        }
 
         FileCollection testClasspath = this.convention.getPlugin(JavaPluginConvention.class).getSourceSets().getByName("test").getRuntimeClasspath();
 

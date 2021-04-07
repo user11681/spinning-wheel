@@ -1,4 +1,4 @@
-package user11681.wheel.dependency;
+package user11681.wheel.extension;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,8 +14,14 @@ public class Repository {
         this.url = url;
     }
 
-    public Repository dependency(String key, String artifact) {
-        this.dependencies.add(new Dependency(key, artifact, this.key));
+    public Repository dependency(String key, String module) {
+        this.dependencies.add(new Dependency(key, module + ":latest.release", this.key));
+
+        return this;
+    }
+
+    public Repository dependency(String key, String artifact, String version) {
+        this.dependencies.add(new Dependency(key, artifact + ':' + version, this.key));
 
         return this;
     }

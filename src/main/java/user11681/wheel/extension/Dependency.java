@@ -1,6 +1,6 @@
-package user11681.wheel.dependency;
+package user11681.wheel.extension;
 
-import user11681.wheel.WheelExtension;
+import user11681.wheel.extension.WheelExtension;
 
 public class Dependency {
     public final String key;
