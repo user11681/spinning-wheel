@@ -6,7 +6,7 @@ import user11681.wheel.extension.WheelExtension;
 
 @SuppressWarnings("ConstantConditions")
 public class WheelMavenArtifactRepository extends DefaultMavenArtifactRepository {
-    public static final long classPointer = Classes.getClassPointer(WheelMavenArtifactRepository.class);
+    public static final long classPointer = Classes.klass(WheelMavenArtifactRepository.class);
 
     public WheelMavenArtifactRepository() {
         super(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);

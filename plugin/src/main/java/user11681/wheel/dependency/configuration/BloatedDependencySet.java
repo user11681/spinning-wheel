@@ -11,7 +11,7 @@ import org.gradle.api.internal.artifacts.DefaultDependencySet;
 import user11681.reflect.Classes;
 
 public class BloatedDependencySet extends DefaultDependencySet {
-	public static final long classPointer = Classes.getClassPointer(BloatedDependencySet.class);
+	public static final long klass = Classes.klass(BloatedDependencySet.class);
 
 	public BloatedDependencySet(Describable displayName, Configuration clientConfiguration, DomainObjectSet<Dependency> backingSet) {
         super(displayName, clientConfiguration, backingSet);

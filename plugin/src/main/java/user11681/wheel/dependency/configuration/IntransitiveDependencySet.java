@@ -9,7 +9,7 @@ import org.gradle.api.internal.artifacts.DefaultDependencySet;
 import user11681.reflect.Classes;
 
 public class IntransitiveDependencySet extends DefaultDependencySet {
-	public static final long classPointer = Classes.getClassPointer(IntransitiveDependencySet.class);
+	public static final long klass = Classes.klass(IntransitiveDependencySet.class);
 
     public IntransitiveDependencySet(Describable displayName, Configuration clientConfiguration, DomainObjectSet<Dependency> backingSet) {
         super(displayName, clientConfiguration, backingSet);

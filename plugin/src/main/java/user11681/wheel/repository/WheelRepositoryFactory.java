@@ -6,7 +6,7 @@ import user11681.reflect.Classes;
 
 @SuppressWarnings("ConstantConditions")
 public class WheelRepositoryFactory extends DefaultBaseRepositoryFactory {
-	public static final long classPointer = Classes.getClassPointer(WheelRepositoryFactory.class);
+	public static final long classPointer = Classes.klass(WheelRepositoryFactory.class);
 
     public WheelRepositoryFactory() {
         super(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
@@ -14,6 +14,6 @@ public class WheelRepositoryFactory extends DefaultBaseRepositoryFactory {
 
     @Override
     public MavenArtifactRepository createMavenRepository() {
-        return Classes.staticCast(super.createMavenRepository(), WheelMavenArtifactRepository.classPointer);
+        return Classes.reinterpret(super.createMavenRepository(), WheelMavenArtifactRepository.classPointer);
     }
 }

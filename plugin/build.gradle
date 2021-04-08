@@ -25,7 +25,7 @@ repositories {
 dependencies {
     api("net.fabricmc:fabric-loom:0.7-SNAPSHOT")
     api("net.gudenau.lib:unsafe:latest.release")
-    api("user11681:reflect:latest.release")
+    api("user11681:reflect:1.7.0")
     api("user11681:uncheck:latest.release")
 
     compileOnly("org.jetbrains:annotations:latest.release")

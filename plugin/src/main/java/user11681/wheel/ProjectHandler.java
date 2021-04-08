@@ -381,10 +381,10 @@ public class ProjectHandler {
         Configuration mod = this.configurations.create("mod").extendsFrom(modInclude, bloated, intransitive);
         Configuration apiInclude = this.configurations.create("apiInclude");
 
-        Classes.staticCast(Accessor.getObject(bloated, "dependencies"), BloatedDependencySet.classPointer);
-        Classes.staticCast(Accessor.getObject(bloatedInclude, "dependencies"), BloatedDependencySet.classPointer);
-        Classes.staticCast(Accessor.getObject(intransitive, "dependencies"), IntransitiveDependencySet.classPointer);
-        Classes.staticCast(Accessor.getObject(intransitiveInclude, "dependencies"), IntransitiveDependencySet.classPointer);
+        Classes.reinterpret(Accessor.getObject(bloated, "dependencies"), BloatedDependencySet.klass);
+        Classes.reinterpret(Accessor.getObject(bloatedInclude, "dependencies"), BloatedDependencySet.klass);
+        Classes.reinterpret(Accessor.getObject(intransitive, "dependencies"), IntransitiveDependencySet.klass);
+        Classes.reinterpret(Accessor.getObject(intransitiveInclude, "dependencies"), IntransitiveDependencySet.klass);
 
         this.configurations.getByName("api").extendsFrom(apiInclude);
         this.configurations.getByName("modApi").extendsFrom(mod);

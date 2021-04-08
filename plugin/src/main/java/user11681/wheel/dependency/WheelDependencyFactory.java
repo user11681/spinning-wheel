@@ -12,7 +12,7 @@ import user11681.wheel.extension.WheelExtension;
 
 @SuppressWarnings("ConstantConditions")
 public class WheelDependencyFactory extends DefaultDependencyFactory {
-    public static final long classPointer = Classes.getClassPointer(WheelDependencyFactory.class);
+    public static final long classPointer = Classes.klass(WheelDependencyFactory.class);
 
     public WheelDependencyFactory() {
         super(null, null, null, null, null, null);
