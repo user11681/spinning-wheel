@@ -7,7 +7,7 @@ import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 import org.gradle.api.internal.artifacts.DefaultDependencyFactory;
 import user11681.reflect.Classes;
 import user11681.wheel.ProjectHandler;
-import user11681.wheel.extension.Dependency;
+import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.WheelExtension;
 
 @SuppressWarnings("ConstantConditions")

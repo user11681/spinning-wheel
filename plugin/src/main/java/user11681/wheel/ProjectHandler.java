@@ -24,11 +24,16 @@
 package user11681.wheel;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -37,8 +42,9 @@ import net.fabricmc.loom.LoomGradleExtension;
 import net.fabricmc.loom.LoomGradlePlugin;
 import net.fabricmc.loom.configuration.ide.RunConfigSettings;
 import net.fabricmc.loom.task.GenerateSourcesTask;
+import net.fabricmc.loom.task.RemapJarTask;
 import net.fabricmc.loom.task.RunGameTask;
-import net.gudenau.lib.unsafe.Unsafe;
+import net.fabricmc.loom.task.UnpickJarTask;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -49,7 +55,6 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 import org.gradle.api.artifacts.repositories.PasswordCredentials;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileCopyDetails;
 import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.invocation.Gradle;
@@ -65,6 +70,7 @@ import org.gradle.api.plugins.UnknownPluginException;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
@@ -73,11 +79,14 @@ import org.intellij.lang.annotations.Language;
 import user11681.reflect.Accessor;
 import user11681.reflect.Classes;
 import user11681.reflect.Invoker;
+import user11681.uncheck.ThrowingConsumer;
+import user11681.uncheck.Uncheck;
 import user11681.wheel.dependency.WheelDependencyFactory;
 import user11681.wheel.dependency.configuration.BloatedDependencySet;
 import user11681.wheel.dependency.configuration.IntransitiveDependencySet;
 import user11681.wheel.extension.WheelExtension;
 import user11681.wheel.repository.WheelRepositoryFactory;
+import user11681.wheel.util.ThrowingAction;
 
 @SuppressWarnings({"ResultOfMethodCallIgnored", "UnstableApiUsage"})
 public class ProjectHandler {
@@ -125,28 +134,34 @@ public class ProjectHandler {
         this.extension = this.extensions.create("wheel", WheelExtension.class, this.convention);
     }
 
-    private static String sendGET(String uri, @Language("RegExp") String pattern, Function<String, String> thing) {
+    private static String get(String uri, @Language("RegExp") String pattern, Function<String, String> thing) {
         if (httpClient == null) {
             httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
         }
 
         HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(uri)).build();
+        Matcher matcher = Uncheck.handle(() -> Pattern.compile(pattern).matcher(thing.apply(httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body())));
 
-        try {
-            Matcher matcher = Pattern.compile(pattern).matcher(thing.apply(httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body()));
+        matcher.find();
 
-            matcher.find();
+        return matcher.group();
+    }
 
-            return matcher.group();
-        } catch (Throwable throwable) {
-            throw Unsafe.throwException(throwable);
+    private static void makeOld(Path path) throws IOException {
+        String moveOld = path.toString() + "-old";
+        Path moveOldPath = Path.of(moveOld + 0);
+
+        for (int i = 1; Files.exists(moveOldPath); i++) {
+            moveOldPath = Path.of(moveOld + i);
         }
+
+        Files.move(path, moveOldPath);
     }
 
     private void checkMinecraftVersion() {
         if (this.extension.minecraftVersion == null) {
             if (latestMinecraftVersion == null) {
-                latestMinecraftVersion = sendGET("https://meta.fabricmc.net/v2/versions/game", "(?<=\").*(?=\")", (String body) -> body.substring(body.indexOf(":") + 1));
+                latestMinecraftVersion = get("https://meta.fabricmc.net/v2/versions/game", "(?<=\").*(?=\")", (String body) -> body.substring(body.indexOf(":") + 1));
             }
 
             this.extension.minecraftVersion = latestMinecraftVersion;
@@ -156,7 +171,7 @@ public class ProjectHandler {
     private void checkYarnBuild() {
         if (this.extension.yarnBuild == null) {
             if (latestYarnBuilds.get(extension.minecraftVersion) == null) {
-                latestYarnBuilds.put(extension.minecraftVersion, sendGET(
+                latestYarnBuilds.put(extension.minecraftVersion, get(
                     "https://meta.fabricmc.net/v2/versions/yarn/" + extension.minecraftVersion,
                     "\\d+",
                     (String body) -> body.substring(body.indexOf("separator"))
@@ -176,7 +191,7 @@ public class ProjectHandler {
         Classes.staticCast(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.classPointer);
         Classes.staticCast(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.classPointer);
 
-        //        this.configurations.create("dev");
+        // this.configurations.create("dev");
 
         this.project.beforeEvaluate(ignored -> this.beforeEvaluate());
         this.project.afterEvaluate(ignored -> this.afterEvaluate());
@@ -203,6 +218,24 @@ public class ProjectHandler {
         this.loom = this.extensions.getByType(LoomGradleExtension.class);
         this.runConfigs = this.loom.getRunConfigs();
 
+        this.loom.shareCaches = true;
+
+        SourceSet test = this.convention.getPlugin(JavaPluginConvention.class).getSourceSets().getByName("test");
+
+        this.runConfigs.create("testClient", (RunConfigSettings settings) -> {
+            settings.client();
+            settings.source(test);
+
+            this.runTask(settings).classpath(test.getRuntimeClasspath());
+        });
+
+        this.runConfigs.create("testServer", (RunConfigSettings settings) -> {
+            settings.server();
+            settings.source(test);
+
+            this.runTask(settings).classpath(test.getRuntimeClasspath());
+        });
+
         this.checkMinecraftVersion();
         this.checkYarnBuild();
 
@@ -216,53 +249,30 @@ public class ProjectHandler {
             this.dependencies.add("modApi", "noauth");
         }
 
-        this.tasks.whenObjectAdded((Task task) -> {
-            if (task.getName().equals(this.extension.genSources)) try {
-                if (!((File) Invoker.bind(task, "getMappedJarFileWithSuffix", File.class, String.class).invoke("-sources.jar")).exists()) {
-                    this.logger.info("sources not found; running genSources");
-
-                    ((GenerateSourcesTask) task).doTask();
-                }
-            } catch (Throwable throwable) {
-                Unsafe.throwException(throwable);
-            }
-        });
-
         this.extensions.getByType(JavaPluginExtension.class).withSourcesJar();
 
         this.tasks.withType(JavaCompile.class).forEach((JavaCompile task) -> task.getOptions().setEncoding("UTF-8"));
 
         this.tasks.withType(Jar.class).forEach((Jar task) -> {
-            //            task.getArchiveClassifier().set("dev");
+            // task.getArchiveClassifier().set("dev");
 
             task.from("LICENSE");
         });
 
-        Task remapJar = this.tasks.getByName("remapJar");
-
-        remapJar.doLast((Task remapTask) -> remapTask.getInputs().getFiles().filter((File file) -> file.getName().endsWith(".jar")).forEach(File::delete));
+        RemapJarTask remapJar = (RemapJarTask) this.tasks.getByName("remapJar").doLast((Task remapTask) -> remapTask.getInputs().getFiles().filter((File file) -> file.getName().endsWith(".jar")).forEach(File::delete));
 
         ProcessResources processResources = (ProcessResources) this.tasks.getByName("processResources");
         processResources.getInputs().property("version", this.project.getVersion());
         processResources.filesMatching("fabric.mod.json", (FileCopyDetails details) -> details.expand(new HashMap<>(Map.of("version", project.getVersion()))));
 
-        //        File devJar = project.file(String.format("%s/libs/%s-%s-dev.jar", this.project.getBuildDir(), this.project.getName(), this.project.getVersion()));
-
-        //        this.artifacts.add("dev", devJar, (ConfigurablePublishArtifact artifact) -> artifact.builtBy(tasks.getByName("jar")).setType("jar"));
-
-        //        if (devJar.exists()) {
-        //            RemapJarTask task = (RemapJarTask) tasks.getByName("remapJar");
+        //        File devJar = project.file("%s/libs/%s-%s-dev.jar".formatted(this.project.getBuildDir(), this.project.getName(), this.project.getVersion()));
         //
-        //            task.getInput().set(devJar);
-        //            task.getArchiveFileName().set(String.format("%s-%s.jar", project.getName(), project.getVersion()));
+        //        this.artifacts.add("dev", devJar, (ConfigurablePublishArtifact artifact) -> artifact.builtBy(tasks.getByName("jar")).setType("jar"));
+        //
+        //        if (devJar.exists()) {
+        //            remapJar.getInput().set(devJar);
+        //            remapJar.getArchiveFileName().set("%s-%s.jar".formatted(this.project.getName(), this.project.getVersion()));
         //        }
-
-        FileCollection testClasspath = this.convention.getPlugin(JavaPluginConvention.class).getSourceSets().getByName("test").getRuntimeClasspath();
-
-        this.runConfigs.create("testClient", RunConfigSettings::client);
-        this.runConfigs.create("testServer", RunConfigSettings::client);
-        ((RunGameTask) this.tasks.getByName("runTestClient")).classpath(testClasspath);
-        ((RunGameTask) this.tasks.getByName("runTestServer")).classpath(testClasspath);
 
         if (this.extension.publish.enabled) {
             PublishingExtension publishing = this.extensions.getByType(PublishingExtension.class);
@@ -282,7 +292,7 @@ public class ProjectHandler {
                 publishing.getRepositories().mavenLocal();
             }
 
-            if (this.extension.publish.external.enabled) {
+            if (this.extension.publish.external.repository != null) {
                 publishing.getRepositories().maven((MavenArtifactRepository repository) -> {
                     repository.setUrl(this.extension.publish.external.repository);
 
@@ -292,6 +302,73 @@ public class ProjectHandler {
                     }));
                 });
             }
+        }
+
+        this.project.afterEvaluate((ThrowingAction<Project>) project -> this.afterLoom());
+    }
+
+    private void afterLoom() throws Throwable {
+        this.generateSources();
+        this.setRunDirectory();
+    }
+
+    private RunGameTask runTask(RunConfigSettings configuration) {
+        String name = configuration.getName();
+
+        return (RunGameTask) this.tasks.getByName("run" + name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1));
+    }
+
+    private void generateSources() throws Throwable {
+        GenerateSourcesTask genSources = (GenerateSourcesTask) this.tasks.findByName(this.extension.genSources);
+
+        if (genSources != null) {
+            if (this.loom.getMappingsProvider().hasUnpickDefinitions()) {
+                ((UnpickJarTask) this.tasks.getByName("unpickJar")).exec();
+            }
+
+            if (!((File) Invoker.bind(genSources, "getMappedJarFileWithSuffix", File.class, String.class).invoke("-sources.jar")).exists()) {
+                this.logger.info("sources not found; running genSources");
+
+                genSources.doTask();
+            }
+        }
+    }
+
+    private void setRunDirectory() {
+        if (this.project == this.rootProject && this.extension.run.enabled) {
+            this.runConfigs.stream().map(RunConfigSettings::getRunDir).distinct().map(this.rootProject::file).map(File::toPath).forEach((ThrowingConsumer<Path>) (Path oldPath) -> {
+                String customPath = this.extension.run.path;
+                Path runPath = customPath == null ? this.loom.getUserCache().toPath().resolve("run") : Path.of(customPath);
+
+                if (Files.exists(runPath) && !Files.isDirectory(runPath)) {
+                    throw new FileAlreadyExistsException("%s exists and is not a directory".formatted(runPath));
+                }
+
+                if (Files.exists(oldPath)) {
+                    if (Files.isSymbolicLink(oldPath)) {
+                        Path linkTarget = Files.readSymbolicLink(oldPath);
+
+                        if (Files.isSameFile(linkTarget, runPath)) {
+                            Files.createDirectories(runPath);
+
+                            return;
+                        }
+
+                        if (!Files.exists(linkTarget)) {
+                            Files.delete(oldPath);
+                        }
+                    }
+
+                    if (Files.exists(runPath)) {
+                        makeOld(oldPath);
+                    } else if (Files.isDirectory(oldPath)) {
+                        Files.move(oldPath, runPath);
+                    }
+                }
+
+                Files.createDirectories(runPath);
+                Files.createSymbolicLink(oldPath, runPath);
+            });
         }
     }
 

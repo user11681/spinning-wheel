@@ -1,56 +1,24 @@
 plugins {
-    id("java-gradle-plugin")
-    id("maven-publish")
+    id("wheel")
+    id("java-library")
 }
 
 group("user11681")
-version("0-SNAPSHOT")
+version("1.2.3")
 
-gradlePlugin {
-    plugins {
-        wheel {
-            id = "wheel"
-            implementationClass = "user11681.wheel.WheelPlugin"
-        }
-    }
+wheel {
+    nospam = false
 }
 
 repositories {
-    mavenCentral()
-
-    maven {url("https://auoeke.jfrog.io/artifactory/maven")}
-    maven {url("https://maven.fabricmc.net")}
+    mavenLocal()
 }
 
 dependencies {
-    api("net.fabricmc:fabric-loom:0.7-SNAPSHOT")
-    api("net.gudenau.lib:unsafe:latest.release")
-    api("user11681:reflect:latest.release")
-
-    compileOnly("org.jetbrains:annotations:latest.release")
-
-    testImplementation("org.junit.jupiter:junit-jupiter:latest.release")
-}
-
-java {
-    withSourcesJar()
-}
-
-jar {
-    from(file("LICENSE"))
-}
-
-publishing {
-    repositories {
-        mavenLocal()
-
-        maven {
-            url("https://auoeke.jfrog.io/artifactory/maven")
-
-            credentials {
-                username(System.env.ARTIFACTORY_USERNAME)
-                password(System.env.ARTIFACTORY_PASSWORD)
-            }
-        }
-    }
+    mod("arrp")
+    modInclude("api-screen-handler")
+    modInclude("api-screen")
+    bloated("auto-config")
+    intransitive("mod-menu")
+    mod("better-slabs")
 }

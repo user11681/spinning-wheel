@@ -4,6 +4,7 @@ import groovy.lang.Closure;
 import org.gradle.api.plugins.Convention;
 import org.gradle.util.ConfigureUtil;
 import user11681.wheel.dependency.RepositoryContainer;
+import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.publish.PublishingConfig;
 
 public class WheelExtension {
@@ -13,6 +14,7 @@ public class WheelExtension {
     public String yarnBuild;
     public Compatibility javaVersion;
     public PublishingConfig publish = new PublishingConfig();
+    public RunDirectory run = new RunDirectory();
 
     public WheelExtension(Convention convention) {
         this.javaVersion = new Compatibility(convention);

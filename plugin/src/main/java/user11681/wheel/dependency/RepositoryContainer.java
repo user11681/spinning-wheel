@@ -3,8 +3,8 @@ package user11681.wheel.dependency;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import user11681.wheel.extension.Dependency;
-import user11681.wheel.extension.Repository;
+import user11681.wheel.extension.dependency.Dependency;
+import user11681.wheel.extension.dependency.Repository;
 import user11681.wheel.util.Util;
 
 public class RepositoryContainer {

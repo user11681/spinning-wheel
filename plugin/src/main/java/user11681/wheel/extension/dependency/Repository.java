@@ -1,4 +1,4 @@
-package user11681.wheel.extension;
+package user11681.wheel.extension.dependency;
 
 import java.util.ArrayList;
 import java.util.List;

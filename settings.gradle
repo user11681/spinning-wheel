@@ -1,3 +1,13 @@
-rootProject.name = "wheel"
+pluginManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
 
-includeBuild("testbuild")
+        maven {url("https://maven.fabricmc.net")}
+        maven {url("https://auoeke.jfrog.io/artifactory/maven")}
+    }
+}
+
+rootProject.name = "testbuild"
+
+includeBuild("plugin")
