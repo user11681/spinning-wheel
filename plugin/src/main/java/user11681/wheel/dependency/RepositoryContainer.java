@@ -35,7 +35,7 @@ public class RepositoryContainer {
 
         return this.repositories.values().stream()
             .flatMap((Repository repository) -> repository.dependencies.stream())
-            .filter((Dependency entry) -> Util.sanitize(entry.key).equals(sanitizedDependency) || Util.sanitize(entry.artifact.split(":", 3)[1]).equals(sanitizedDependency))
+            .filter((Dependency entry) -> Util.sanitize(entry.key()).equals(sanitizedDependency) || Util.sanitize(entry.artifact().split(":", 3)[1]).equals(sanitizedDependency))
             .findFirst().orElse(null);
     }
 }

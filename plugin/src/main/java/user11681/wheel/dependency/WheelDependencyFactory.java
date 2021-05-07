@@ -12,7 +12,7 @@ import user11681.wheel.extension.WheelExtension;
 
 @SuppressWarnings("ConstantConditions")
 public class WheelDependencyFactory extends DefaultDependencyFactory {
-    public static final long classPointer = Classes.klass(WheelDependencyFactory.class);
+    public static final long klass = Classes.klass(WheelDependencyFactory.class);
 
     public WheelDependencyFactory() {
         super(null, null, null, null, null, null);
@@ -69,14 +69,14 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
             Dependency entry = WheelExtension.dependency(components[0]);
 
             if (addRepository(entry)) {
-                return changeVersion(entry.artifact, components[1]);
+                return changeVersion(entry.artifact(), components[1]);
             }
         }
 
         Dependency entry = WheelExtension.dependency(dependency);
 
         if (addRepository(entry)) {
-            return entry.artifact;
+            return entry.artifact();
         }
 
         if (ProjectHandler.currentProject != null && ProjectHandler.currentProject.findProject(dependency) != null) {

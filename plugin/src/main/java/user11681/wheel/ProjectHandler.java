@@ -47,7 +47,6 @@ import net.fabricmc.loom.task.RunGameTask;
 import net.fabricmc.loom.task.UnpickJarTask;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
@@ -55,7 +54,6 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 import org.gradle.api.artifacts.repositories.PasswordCredentials;
-import org.gradle.api.file.FileCopyDetails;
 import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
@@ -66,7 +64,6 @@ import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.plugins.PluginManager;
-import org.gradle.api.plugins.UnknownPluginException;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
@@ -183,24 +180,25 @@ public class ProjectHandler {
     }
 
     public void handle() {
-        currentProject = this.project;
-
-        this.plugins.apply(JavaLibraryPlugin.class);
-        this.plugins.apply(MavenPublishPlugin.class);
-
-        Classes.staticCast(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.classPointer);
-        Classes.staticCast(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.classPointer);
-
-        // this.configurations.create("dev");
-
         this.project.beforeEvaluate(ignored -> this.beforeEvaluate());
         this.project.afterEvaluate(ignored -> this.afterEvaluate());
 
-        try {
-            this.plugins.apply("fabric-loom");
-        } catch (UnknownPluginException exception) {
-            this.plugins.apply(LoomGradlePlugin.class);
-        }
+        currentProject = this.project;
+
+        Classes.reinterpret(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.klass);
+        Classes.reinterpret(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.klass);
+
+        this.plugins.apply(JavaLibraryPlugin.class);
+        this.plugins.apply(MavenPublishPlugin.class);
+        this.plugins.apply(LoomGradlePlugin.class);
+
+        this.extensions.getByType(JavaPluginExtension.class).withSourcesJar();
+
+        // this.configurations.create("dev");
+
+        this.loom = this.extensions.getByType(LoomGradleExtension.class);
+        this.loom.shareCaches = false; // shareCaches = true prevents dev JAR remapping for some reason
+        this.runConfigs = this.loom.getRunConfigs();
 
         this.extension.javaVersion.setSource(8);
         this.extension.javaVersion.setTarget(8);
@@ -215,21 +213,16 @@ public class ProjectHandler {
     }
 
     private void afterEvaluate() {
-        this.loom = this.extensions.getByType(LoomGradleExtension.class);
-        this.runConfigs = this.loom.getRunConfigs();
-
-        this.loom.shareCaches = true;
-
         SourceSet test = this.convention.getPlugin(JavaPluginConvention.class).getSourceSets().getByName("test");
 
-        this.runConfigs.create("testClient", (RunConfigSettings settings) -> {
+        this.runConfigs.create("testClient", settings -> {
             settings.client();
             settings.source(test);
 
             this.runTask(settings).classpath(test.getRuntimeClasspath());
         });
 
-        this.runConfigs.create("testServer", (RunConfigSettings settings) -> {
+        this.runConfigs.create("testServer", settings -> {
             settings.server();
             settings.source(test);
 
@@ -249,21 +242,19 @@ public class ProjectHandler {
             this.dependencies.add("modApi", "noauth");
         }
 
-        this.extensions.getByType(JavaPluginExtension.class).withSourcesJar();
+        this.tasks.withType(JavaCompile.class).forEach(task -> task.getOptions().setEncoding("UTF-8"));
 
-        this.tasks.withType(JavaCompile.class).forEach((JavaCompile task) -> task.getOptions().setEncoding("UTF-8"));
-
-        this.tasks.withType(Jar.class).forEach((Jar task) -> {
+        this.tasks.withType(Jar.class).forEach(task -> {
             // task.getArchiveClassifier().set("dev");
 
             task.from("LICENSE");
         });
 
-        RemapJarTask remapJar = (RemapJarTask) this.tasks.getByName("remapJar").doLast((Task remapTask) -> remapTask.getInputs().getFiles().filter((File file) -> file.getName().endsWith(".jar")).forEach(File::delete));
+        RemapJarTask remapJar = (RemapJarTask) this.tasks.getByName("remapJar");
 
         ProcessResources processResources = (ProcessResources) this.tasks.getByName("processResources");
         processResources.getInputs().property("version", this.project.getVersion());
-        processResources.filesMatching("fabric.mod.json", (FileCopyDetails details) -> details.expand(new HashMap<>(Map.of("version", project.getVersion()))));
+        processResources.filesMatching("fabric.mod.json", details -> details.expand(new HashMap<>(Map.of("version", project.getVersion()))));
 
         //        File devJar = project.file("%s/libs/%s-%s-dev.jar".formatted(this.project.getBuildDir(), this.project.getName(), this.project.getVersion()));
         //
@@ -307,29 +298,31 @@ public class ProjectHandler {
         this.project.afterEvaluate((ThrowingAction<Project>) project -> this.afterLoom());
     }
 
-    private void afterLoom() throws Throwable {
-        this.generateSources();
-        this.setRunDirectory();
-    }
-
     private RunGameTask runTask(RunConfigSettings configuration) {
         String name = configuration.getName();
 
         return (RunGameTask) this.tasks.getByName("run" + name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1));
     }
 
+    private void afterLoom() throws Throwable {
+        this.generateSources();
+        this.setRunDirectory();
+    }
+
     private void generateSources() throws Throwable {
-        GenerateSourcesTask genSources = (GenerateSourcesTask) this.tasks.findByName(this.extension.genSources);
+        if (this.extension.genSources != null) {
+            GenerateSourcesTask genSources = (GenerateSourcesTask) this.tasks.findByName(this.extension.genSources);
 
-        if (genSources != null) {
-            if (this.loom.getMappingsProvider().hasUnpickDefinitions()) {
-                ((UnpickJarTask) this.tasks.getByName("unpickJar")).exec();
-            }
+            if (genSources != null) {
+                if (!((File) Invoker.bind(genSources, "getMappedJarFileWithSuffix", File.class, String.class).invoke("-sources.jar")).exists()) {
+                    this.logger.info("sources not found; running genSources");
 
-            if (!((File) Invoker.bind(genSources, "getMappedJarFileWithSuffix", File.class, String.class).invoke("-sources.jar")).exists()) {
-                this.logger.info("sources not found; running genSources");
+                    if (this.loom.getMappingsProvider().hasUnpickDefinitions()) {
+                        ((UnpickJarTask) this.tasks.getByName("unpickJar")).exec();
+                    }
 
-                genSources.doTask();
+                    genSources.doTask();
+                }
             }
         }
     }
@@ -381,10 +374,10 @@ public class ProjectHandler {
         Configuration mod = this.configurations.create("mod").extendsFrom(modInclude, bloated, intransitive);
         Configuration apiInclude = this.configurations.create("apiInclude");
 
-        Classes.reinterpret(Accessor.getObject(bloated, "dependencies"), BloatedDependencySet.klass);
-        Classes.reinterpret(Accessor.getObject(bloatedInclude, "dependencies"), BloatedDependencySet.klass);
-        Classes.reinterpret(Accessor.getObject(intransitive, "dependencies"), IntransitiveDependencySet.klass);
-        Classes.reinterpret(Accessor.getObject(intransitiveInclude, "dependencies"), IntransitiveDependencySet.klass);
+        Classes.reinterpret(bloated.getDependencies(), BloatedDependencySet.klass);
+        Classes.reinterpret(bloatedInclude.getDependencies(), BloatedDependencySet.klass);
+        Classes.reinterpret(intransitive.getDependencies(), IntransitiveDependencySet.klass);
+        Classes.reinterpret(intransitiveInclude.getDependencies(), IntransitiveDependencySet.klass);
 
         this.configurations.getByName("api").extendsFrom(apiInclude);
         this.configurations.getByName("modApi").extendsFrom(mod);

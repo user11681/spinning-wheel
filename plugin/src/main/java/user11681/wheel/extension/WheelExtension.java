@@ -20,7 +20,7 @@ public class WheelExtension {
         this.javaVersion = new Compatibility(convention);
     }
 
-    public static final RepositoryContainer dependencies = new RepositoryContainer((RepositoryContainer dependencies) -> {
+    public static final RepositoryContainer repositories = new RepositoryContainer((RepositoryContainer dependencies) -> {
         dependencies.repository("auoeke", "https://auoeke.jfrog.io/artifactory/maven")
             .dependency("bason", "user11681:bason")
             .dependency("cell", "user11681:cell")
@@ -101,15 +101,15 @@ public class WheelExtension {
     });
 
     public static String repository(String key) {
-        return dependencies.repository(key);
+        return repositories.repository(key);
     }
 
     public static void repository(String key, String value) {
-        dependencies.putRepository(key, value);
+        repositories.putRepository(key, value);
     }
 
     public static Dependency dependency(String key) {
-        return dependencies.entry(key);
+        return repositories.entry(key);
     }
 
     public void publish(Closure<?> closure) {
