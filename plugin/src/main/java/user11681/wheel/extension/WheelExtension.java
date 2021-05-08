@@ -1,6 +1,7 @@
 package user11681.wheel.extension;
 
 import groovy.lang.Closure;
+import java.util.Locale;
 import org.gradle.api.plugins.Convention;
 import org.gradle.util.ConfigureUtil;
 import user11681.wheel.dependency.RepositoryContainer;
@@ -15,6 +16,7 @@ public class WheelExtension {
     public Compatibility javaVersion;
     public PublishingConfig publish = new PublishingConfig();
     public RunDirectory run = new RunDirectory();
+    public Channel channel = Channel.RELEASE;
 
     public WheelExtension(Convention convention) {
         this.javaVersion = new Compatibility(convention);
@@ -127,5 +129,9 @@ public class WheelExtension {
     public void setJavaVersion(Object version) {
         this.javaVersion.setSource(version);
         this.javaVersion.setTarget(version);
+    }
+
+    public void setChannel(Object channel) {
+        this.channel = Channel.valueOf(String.valueOf(channel).toUpperCase(Locale.ROOT));
     }
 }

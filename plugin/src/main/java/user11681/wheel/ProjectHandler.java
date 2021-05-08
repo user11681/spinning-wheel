@@ -35,7 +35,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.fabricmc.loom.LoomGradleExtension;
@@ -56,7 +55,9 @@ import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 import org.gradle.api.artifacts.repositories.PasswordCredentials;
 import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.invocation.Gradle;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.LoggingManager;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.JavaLibraryPlugin;
@@ -70,6 +71,7 @@ import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.internal.logging.LoggingManagerInternal;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.language.jvm.tasks.ProcessResources;
 import org.intellij.lang.annotations.Language;
@@ -81,6 +83,7 @@ import user11681.uncheck.Uncheck;
 import user11681.wheel.dependency.WheelDependencyFactory;
 import user11681.wheel.dependency.configuration.BloatedDependencySet;
 import user11681.wheel.dependency.configuration.IntransitiveDependencySet;
+import user11681.wheel.extension.Channel;
 import user11681.wheel.extension.WheelExtension;
 import user11681.wheel.repository.WheelRepositoryFactory;
 import user11681.wheel.util.ThrowingAction;
@@ -108,6 +111,7 @@ public class ProjectHandler {
     public final Logger logger;
     public final Gradle gradle;
     public final ScriptHandler buildScript;
+    public final LoggingManager logging;
     public final WheelExtension extension;
 
     public LoomGradleExtension loom;
@@ -128,16 +132,19 @@ public class ProjectHandler {
         this.logger = project.getLogger();
         this.gradle = project.getGradle();
         this.buildScript = project.getBuildscript();
+        this.logging = (LoggingManagerInternal) project.getLogging();
         this.extension = this.extensions.create("wheel", WheelExtension.class, this.convention);
     }
 
-    private static String get(String uri, @Language("RegExp") String pattern, Function<String, String> thing) {
+    private static String match(String endpoint, @Language("RegExp") String pattern) {
         if (httpClient == null) {
             httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
         }
 
-        HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(uri)).build();
-        Matcher matcher = Uncheck.handle(() -> Pattern.compile(pattern).matcher(thing.apply(httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body())));
+        Matcher matcher = Uncheck.handle(() -> Pattern.compile(pattern).matcher(httpClient.send(
+            HttpRequest.newBuilder().GET().uri(new URI("https://meta.fabricmc.net/v2/versions/" + endpoint)).build(),
+            HttpResponse.BodyHandlers.ofString()
+        ).body()));
 
         matcher.find();
 
@@ -158,7 +165,9 @@ public class ProjectHandler {
     private void checkMinecraftVersion() {
         if (this.extension.minecraftVersion == null) {
             if (latestMinecraftVersion == null) {
-                latestMinecraftVersion = get("https://meta.fabricmc.net/v2/versions/game", "(?<=\").*(?=\")", (String body) -> body.substring(body.indexOf(":") + 1));
+                latestMinecraftVersion = this.extension.channel == Channel.RELEASE
+                    ? match("game", "(?<=\"version\": \").*?(?=\",\\s*\"stable\": true)")
+                    : match("game", "(?<=\"version\": \").*?(?=\")");
             }
 
             this.extension.minecraftVersion = latestMinecraftVersion;
@@ -168,10 +177,9 @@ public class ProjectHandler {
     private void checkYarnBuild() {
         if (this.extension.yarnBuild == null) {
             if (latestYarnBuilds.get(extension.minecraftVersion) == null) {
-                latestYarnBuilds.put(extension.minecraftVersion, get(
-                    "https://meta.fabricmc.net/v2/versions/yarn/" + extension.minecraftVersion,
-                    "\\d+",
-                    (String body) -> body.substring(body.indexOf("separator"))
+                latestYarnBuilds.put(extension.minecraftVersion, match(
+                    "yarn/" + extension.minecraftVersion,
+                    "(?<=\"build\": )\\d+"
                 ));
             }
 
@@ -184,6 +192,8 @@ public class ProjectHandler {
         this.project.afterEvaluate(ignored -> this.afterEvaluate());
 
         currentProject = this.project;
+
+        this.logging.captureStandardOutput(LogLevel.INFO);
 
         Classes.reinterpret(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.klass);
         Classes.reinterpret(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.klass);
@@ -232,14 +242,17 @@ public class ProjectHandler {
         this.checkMinecraftVersion();
         this.checkYarnBuild();
 
+        this.logger.lifecycle("Minecraft version {}", this.extension.minecraftVersion);
+        this.logger.lifecycle("Yarn build {}", this.extension.yarnBuild);
+
         this.dependencies.add("minecraft", "com.mojang:minecraft:" + this.extension.minecraftVersion);
         this.dependencies.add("mappings", "net.fabricmc:yarn:%s+build.%s:v2".formatted(this.extension.minecraftVersion, this.extension.yarnBuild));
         this.dependencies.add("mod", "net.fabricmc:fabric-loader:latest.release");
         this.dependencies.add("testImplementation", "org.junit.jupiter:junit-jupiter:latest.release");
 
         if (this.extension.nospam) {
-            this.dependencies.add("modApi", "narrator-off");
-            this.dependencies.add("modApi", "noauth");
+            this.dependencies.add("mod", "narrator-off");
+            this.dependencies.add("mod", "noauth");
         }
 
         this.tasks.withType(JavaCompile.class).forEach(task -> task.getOptions().setEncoding("UTF-8"));

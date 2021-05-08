@@ -16,6 +16,7 @@ if (!plugins.hasPlugin("wheel")) {
 wheel {
     nospam = false
     publish = false
+    channel = "release"
 }
 
 repositories {
