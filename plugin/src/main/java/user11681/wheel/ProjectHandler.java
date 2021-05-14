@@ -71,7 +71,6 @@ import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
-import org.gradle.internal.logging.LoggingManagerInternal;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.language.jvm.tasks.ProcessResources;
 import org.intellij.lang.annotations.Language;
@@ -132,11 +131,11 @@ public class ProjectHandler {
         this.logger = project.getLogger();
         this.gradle = project.getGradle();
         this.buildScript = project.getBuildscript();
-        this.logging = (LoggingManagerInternal) project.getLogging();
+        this.logging = project.getLogging();
         this.extension = this.extensions.create("wheel", WheelExtension.class, this.convention);
     }
 
-    private static String match(String endpoint, @Language("RegExp") String pattern) {
+    private static String meta(String endpoint, @Language("RegExp") String pattern) {
         if (httpClient == null) {
             httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
         }
@@ -165,9 +164,12 @@ public class ProjectHandler {
     private void checkMinecraftVersion() {
         if (this.extension.minecraftVersion == null) {
             if (latestMinecraftVersion == null) {
-                latestMinecraftVersion = this.extension.channel == Channel.RELEASE
-                    ? match("game", "(?<=\"version\": \").*?(?=\",\\s*\"stable\": true)")
-                    : match("game", "(?<=\"version\": \").*?(?=\")");
+                latestMinecraftVersion = meta(
+                    "game",
+                    this.extension.channel == Channel.RELEASE
+                        ? "(?<=\"version\": \").*?(?=\",\\s*\"stable\": true)"
+                        : "(?<=\"version\": \").*?(?=\")"
+                );
             }
 
             this.extension.minecraftVersion = latestMinecraftVersion;
@@ -177,7 +179,7 @@ public class ProjectHandler {
     private void checkYarnBuild() {
         if (this.extension.yarnBuild == null) {
             if (latestYarnBuilds.get(extension.minecraftVersion) == null) {
-                latestYarnBuilds.put(extension.minecraftVersion, match(
+                latestYarnBuilds.put(extension.minecraftVersion, meta(
                     "yarn/" + extension.minecraftVersion,
                     "(?<=\"build\": )\\d+"
                 ));
@@ -328,7 +330,7 @@ public class ProjectHandler {
 
             if (genSources != null) {
                 if (!((File) Invoker.bind(genSources, "getMappedJarFileWithSuffix", File.class, String.class).invoke("-sources.jar")).exists()) {
-                    this.logger.info("sources not found; running genSources");
+                    this.logger.lifecycle("sources not found; running genSources");
 
                     if (this.loom.getMappingsProvider().hasUnpickDefinitions()) {
                         ((UnpickJarTask) this.tasks.getByName("unpickJar")).exec();

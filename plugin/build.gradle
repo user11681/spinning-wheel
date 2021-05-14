@@ -3,8 +3,8 @@ plugins {
     id("maven-publish")
 }
 
-group("user11681")
-version("0-SNAPSHOT")
+group = "user11681"
+version = "0-SNAPSHOT"
 
 gradlePlugin {
     plugins {
