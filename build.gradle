@@ -7,6 +7,10 @@ allprojects {
     version = "1.2.3"
 }
 
+subprojects {
+    tasks.publish.enabled = false
+}
+
 tasks.publish.dependsOn(gradle.includedBuild("plugin").gradle.rootProject.tasks.publish)
 
 if (!plugins.hasPlugin("wheel")) {
