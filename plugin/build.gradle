@@ -41,6 +41,9 @@ jar {
     from(file("LICENSE"))
 }
 
+println(System.properties["maven.username"])
+println(System.properties["maven.password"])
+
 publishing {
     repositories {
         mavenLocal()

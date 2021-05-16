@@ -14,4 +14,4 @@ jobs:
           distribution: "adopt"
 
       - name: publish
-        run: ./gradlew publish -D maven.username=${{ secrets.MAVEN_USERNAME }} -D maven.password=${{ secrets.MAVEN_PASSWORD }}
+        run: ./gradlew publish -Dmaven.username=${{ secrets.MAVEN_USERNAME }} -Dmaven.password=${{ secrets.MAVEN_PASSWORD }}
