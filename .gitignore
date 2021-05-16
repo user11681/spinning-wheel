@@ -1,8 +1,8 @@
 .*
 
+!.gitignore
+!.github
+
 build
 out
 run
-
-!.gitignore
-!.github
