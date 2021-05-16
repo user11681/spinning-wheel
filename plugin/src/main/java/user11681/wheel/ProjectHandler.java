@@ -156,14 +156,14 @@ public class ProjectHandler {
 
     private void checkYarnBuild() {
         if (this.extension.yarnBuild == null) {
-            if (latestYarnBuilds.get(extension.minecraftVersion) == null) {
-                latestYarnBuilds.put(extension.minecraftVersion, meta(
-                    "yarn/" + extension.minecraftVersion,
+            if (latestYarnBuilds.get(this.extension.minecraftVersion) == null) {
+                latestYarnBuilds.put(this.extension.minecraftVersion, meta(
+                    "yarn/" + this.extension.minecraftVersion,
                     "(?<=\"build\": )\\d+"
                 ));
             }
 
-            this.extension.yarnBuild = latestYarnBuilds.get(extension.minecraftVersion);
+            this.extension.yarnBuild = latestYarnBuilds.get(this.extension.minecraftVersion);
         }
     }
 
