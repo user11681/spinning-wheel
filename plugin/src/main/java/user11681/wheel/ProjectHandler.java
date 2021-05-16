@@ -191,7 +191,7 @@ public class ProjectHandler {
         // this.configurations.create("dev");
 
         this.loom = this.extensions.getByType(LoomGradleExtension.class);
-        this.loom.shareCaches = false; // shareCaches = true prevents dev JAR remapping for some reason
+        // this.loom.shareCaches = false; // shareCaches = true prevents dev JAR remapping for some reason
         this.runConfigs = this.loom.getRunConfigs();
 
         this.extension.javaVersion.setSource(8);
@@ -226,8 +226,8 @@ public class ProjectHandler {
         this.checkMinecraftVersion();
         this.checkYarnBuild();
 
-        this.logger.lifecycle("Minecraft version {}", this.extension.minecraftVersion);
-        this.logger.lifecycle("Yarn build {}", this.extension.yarnBuild);
+        this.logger.lifecycle("Minecraft version: {}", this.extension.minecraftVersion);
+        this.logger.lifecycle("Yarn build: {}", this.extension.yarnBuild);
 
         this.dependencies.add("minecraft", "com.mojang:minecraft:" + this.extension.minecraftVersion);
         this.dependencies.add("mappings", "net.fabricmc:yarn:%s+build.%s:v2".formatted(this.extension.minecraftVersion, this.extension.yarnBuild));
@@ -252,7 +252,6 @@ public class ProjectHandler {
         });
 
         RemapJarTask remapJar = this.task("remapJar");
-
         ProcessResources processResources = this.task("processResources");
         processResources.getInputs().property("version", this.project.getVersion());
         processResources.filesMatching("fabric.mod.json", details -> details.expand(new HashMap<>(Map.of("version", project.getVersion()))));
