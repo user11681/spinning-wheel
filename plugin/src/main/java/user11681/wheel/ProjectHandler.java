@@ -241,6 +241,7 @@ public class ProjectHandler {
 
         if (this.extension.clean) {
             this.task("build").dependsOn("clean");
+            this.task("clean").finalizedBy("build");
         }
 
         this.tasks.withType(JavaCompile.class).forEach(task -> task.getOptions().setEncoding("UTF-8"));

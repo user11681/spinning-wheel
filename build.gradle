@@ -2,11 +2,6 @@ plugins {
     id("wheel")
 }
 
-allprojects {
-    group = "user11681"
-    version = "1.2.3"
-}
-
 subprojects {
     afterEvaluate {
         tasks.publish.enabled = false
@@ -19,10 +14,14 @@ if (!plugins.hasPlugin("wheel")) {
     return
 }
 
-wheel {
-    nospam = false
-    publish = false
-    channel = "release"
+allprojects {
+    group = "user11681"
+    version = "1.2.5"
+
+    wheel {
+        nospam = false
+        publish = false
+    }
 }
 
 repositories {
