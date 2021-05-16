@@ -10,6 +10,7 @@ import user11681.wheel.extension.publish.PublishingConfig;
 
 public class WheelExtension {
     public boolean nospam = true;
+    public boolean clean = true;
     public String genSources = "genSources";
     public String minecraftVersion;
     public String yarnBuild;

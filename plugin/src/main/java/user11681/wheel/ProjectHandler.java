@@ -23,6 +23,7 @@ import net.fabricmc.loom.task.RunGameTask;
 import net.fabricmc.loom.task.UnpickJarTask;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
@@ -166,6 +167,10 @@ public class ProjectHandler {
         }
     }
 
+    private <T extends Task> T task(String name) {
+        return (T) this.tasks.getByName(name);
+    }
+
     public void handle() {
         this.project.beforeEvaluate(ignored -> this.beforeEvaluate());
         this.project.afterEvaluate(ignored -> this.afterEvaluate());
@@ -234,6 +239,10 @@ public class ProjectHandler {
             this.dependencies.add("mod", "noauth");
         }
 
+        if (this.extension.clean) {
+            this.task("build").dependsOn("clean");
+        }
+
         this.tasks.withType(JavaCompile.class).forEach(task -> task.getOptions().setEncoding("UTF-8"));
 
         this.tasks.withType(Jar.class).forEach(task -> {
@@ -242,15 +251,15 @@ public class ProjectHandler {
             task.from("LICENSE");
         });
 
-        RemapJarTask remapJar = (RemapJarTask) this.tasks.getByName("remapJar");
+        RemapJarTask remapJar = this.task("remapJar");
 
-        ProcessResources processResources = (ProcessResources) this.tasks.getByName("processResources");
+        ProcessResources processResources = this.task("processResources");
         processResources.getInputs().property("version", this.project.getVersion());
         processResources.filesMatching("fabric.mod.json", details -> details.expand(new HashMap<>(Map.of("version", project.getVersion()))));
 
         //        File devJar = project.file("%s/libs/%s-%s-dev.jar".formatted(this.project.getBuildDir(), this.project.getName(), this.project.getVersion()));
         //
-        //        this.artifacts.add("dev", devJar, (ConfigurablePublishArtifact artifact) -> artifact.builtBy(tasks.getByName("jar")).setType("jar"));
+        //        this.artifacts.add("dev", devJar, (ConfigurablePublishArtifact artifact) -> artifact.builtBy(this.task("jar")).setType("jar"));
         //
         //        if (devJar.exists()) {
         //            remapJar.getInput().set(devJar);
@@ -267,7 +276,7 @@ public class ProjectHandler {
                     publication.setVersion(String.valueOf(this.project.getVersion()));
 
                     publication.artifact(remapJar).builtBy(remapJar);
-                    publication.artifact(this.tasks.getByName("sourcesJar")).builtBy(this.tasks.getByName("remapSourcesJar"));
+                    publication.artifact(this.task("sourcesJar")).builtBy(this.task("remapSourcesJar"));
                 });
             }
 
@@ -293,7 +302,7 @@ public class ProjectHandler {
     private RunGameTask runTask(RunConfigSettings configuration) {
         String name = configuration.getName();
 
-        return (RunGameTask) this.tasks.getByName("run" + name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1));
+        return this.task("run" + name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1));
     }
 
     private void afterLoom() throws Throwable {
@@ -310,7 +319,7 @@ public class ProjectHandler {
                     this.logger.lifecycle("sources not found; running genSources");
 
                     if (this.loom.getMappingsProvider().hasUnpickDefinitions()) {
-                        ((UnpickJarTask) this.tasks.getByName("unpickJar")).exec();
+                        this.<UnpickJarTask>task("unpickJar").exec();
                     }
 
                     genSources.doTask();
