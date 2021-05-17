@@ -47,6 +47,7 @@ import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.TaskCollection;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
@@ -171,6 +172,10 @@ public class ProjectHandler {
         return (T) this.tasks.getByName(name);
     }
 
+    private <T extends Task> TaskCollection<T> task(Class<T> type) {
+        return this.tasks.withType(type);
+    }
+
     public void handle() {
         this.project.beforeEvaluate(ignored -> this.beforeEvaluate());
         this.project.afterEvaluate(ignored -> this.afterEvaluate());
@@ -244,17 +249,20 @@ public class ProjectHandler {
             this.task("clean").finalizedBy("build");
         }
 
-        this.tasks.withType(JavaCompile.class).forEach(task -> task.getOptions().setEncoding("UTF-8"));
+        this.task(JavaCompile.class).forEach(task -> task.getOptions().setEncoding("UTF-8"));
 
-        this.tasks.withType(Jar.class).forEach(task -> {
+        this.task(Jar.class).forEach(task -> {
             // task.getArchiveClassifier().set("dev");
 
             task.from("LICENSE");
         });
 
+        this.<ProcessResources>task("processResources").filesMatching(
+            "fabric.mod.json",
+            file -> file.filter(contents -> contents.replaceAll("\\$(\\{version}|version)", String.valueOf(this.project.getVersion())))
+        );
+
         RemapJarTask remapJar = this.task("remapJar");
-        ProcessResources processResources = this.task("processResources");
-        processResources.filesMatching("fabric.mod.json", details -> details.filter(contents -> contents.replaceAll("\\$(\\{version}|version)", String.valueOf(this.project.getVersion()))));
 
         //        File devJar = project.file("%s/libs/%s-%s-dev.jar".formatted(this.project.getBuildDir(), this.project.getName(), this.project.getVersion()));
         //
