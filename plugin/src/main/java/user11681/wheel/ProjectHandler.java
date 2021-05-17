@@ -254,8 +254,7 @@ public class ProjectHandler {
 
         RemapJarTask remapJar = this.task("remapJar");
         ProcessResources processResources = this.task("processResources");
-        processResources.getInputs().property("version", this.project.getVersion());
-        processResources.filesMatching("fabric.mod.json", details -> details.expand(new HashMap<>(Map.of("version", project.getVersion()))));
+        processResources.filesMatching("fabric.mod.json", details -> details.filter(contents -> contents.replaceAll("\\$(\\{version}|version)", String.valueOf(this.project.getVersion()))));
 
         //        File devJar = project.file("%s/libs/%s-%s-dev.jar".formatted(this.project.getBuildDir(), this.project.getName(), this.project.getVersion()));
         //

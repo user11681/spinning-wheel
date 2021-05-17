@@ -1,10 +1,9 @@
 {
     "schemaVersion": 1,
-    "id": "spinningwheel",
+    "id": "test",
     "version": "${version}",
     "entrypoints": {
-        "main": [
-            "TestClass"
-        ]
+        "main": ["TestClass"],
+        "client": ["TestClass$Client"]
     }
 }
