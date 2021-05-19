@@ -1,33 +1,33 @@
 package user11681.wheel.extension;
 
 import org.gradle.api.JavaVersion;
-import org.gradle.api.plugins.Convention;
-import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.tasks.compile.JavaCompile;
+import user11681.wheel.ProjectHandler;
 
 public class Compatibility {
-    private final Convention convention;
+    private final ProjectHandler handler;
 
-    public Compatibility(Convention convention) {
-        this.convention = convention;
+    public Compatibility(ProjectHandler handler) {
+        this.handler = handler;
     }
 
-    public JavaVersion getSource() {
-        return this.convention().getSourceCompatibility();
+    public String getSource() {
+        return this.compileTask().getSourceCompatibility();
     }
 
     public void setSource(Object source) {
-        this.convention().setSourceCompatibility(source == null ? JavaVersion.current() : source);
+        this.compileTask().setSourceCompatibility(source == null ? JavaVersion.current().toString() : String.valueOf(source));
     }
 
-    public JavaVersion getTarget() {
-        return this.convention().getTargetCompatibility();
+    public String getTarget() {
+        return this.compileTask().getTargetCompatibility();
     }
 
     public void setTarget(Object target) {
-        this.convention().setTargetCompatibility(target == null ? JavaVersion.current() : target);
+        this.compileTask().setTargetCompatibility(target == null ? JavaVersion.current().toString() : String.valueOf(target));
     }
 
-    private JavaPluginConvention convention() {
-        return this.convention.getPlugin(JavaPluginConvention.class);
+    private JavaCompile compileTask() {
+        return (JavaCompile) this.handler.tasks.getByName("compileJava");
     }
 }

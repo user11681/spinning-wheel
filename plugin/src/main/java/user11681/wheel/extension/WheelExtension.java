@@ -2,8 +2,8 @@ package user11681.wheel.extension;
 
 import groovy.lang.Closure;
 import java.util.Locale;
-import org.gradle.api.plugins.Convention;
 import org.gradle.util.ConfigureUtil;
+import user11681.wheel.ProjectHandler;
 import user11681.wheel.dependency.RepositoryContainer;
 import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.publish.PublishingConfig;
@@ -19,8 +19,8 @@ public class WheelExtension {
     public RunDirectory run = new RunDirectory();
     public Channel channel = Channel.RELEASE;
 
-    public WheelExtension(Convention convention) {
-        this.javaVersion = new Compatibility(convention);
+    public WheelExtension(ProjectHandler handler) {
+        this.javaVersion = new Compatibility(handler);
     }
 
     public static final RepositoryContainer repositories = new RepositoryContainer((RepositoryContainer dependencies) -> {
