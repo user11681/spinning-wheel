@@ -33,7 +33,6 @@ import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 import org.gradle.api.artifacts.repositories.PasswordCredentials;
 import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.invocation.Gradle;
-import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.LoggingManager;
 import org.gradle.api.plugins.Convention;
@@ -111,7 +110,7 @@ public class ProjectHandler {
         this.gradle = project.getGradle();
         this.buildScript = project.getBuildscript();
         this.logging = project.getLogging();
-        this.extension = this.extensions.create("wheel", WheelExtension.class, this.convention);
+        this.extension = this.extensions.create("wheel", WheelExtension.class, this);
     }
 
     private static String meta(String endpoint, @Language("RegExp") String pattern) {
@@ -177,12 +176,9 @@ public class ProjectHandler {
     }
 
     public void handle() {
-        this.project.beforeEvaluate(ignored -> this.beforeEvaluate());
         this.project.afterEvaluate(ignored -> this.afterEvaluate());
 
         currentProject = this.project;
-
-        this.logging.captureStandardOutput(LogLevel.INFO);
 
         Classes.reinterpret(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.klass);
         Classes.reinterpret(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.klass);
@@ -205,10 +201,6 @@ public class ProjectHandler {
         this.repositories.mavenLocal();
 
         this.configureConfigurations();
-    }
-
-    private void beforeEvaluate() {
-        currentProject = this.project;
     }
 
     private void afterEvaluate() {
@@ -390,5 +382,10 @@ public class ProjectHandler {
         this.configurations.getByName("api").extendsFrom(apiInclude);
         this.configurations.getByName("modApi").extendsFrom(mod);
         this.configurations.getByName("include").extendsFrom(apiInclude, modInclude);
+
+        this.configurations.all(configuration -> configuration.resolutionStrategy(strategy -> {
+            strategy.cacheDynamicVersionsFor(0, "seconds");
+            strategy.cacheChangingModulesFor(0, "seconds");
+        }));
     }
 }
