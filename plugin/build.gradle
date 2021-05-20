@@ -22,15 +22,21 @@ repositories {
     maven {url = "https://maven.fabricmc.net"}
 }
 
+configurations.all {
+    resolutionStrategy {
+        it.cacheDynamicVersionsFor(0, "seconds")
+    }
+}
+
 dependencies {
-    api("net.fabricmc:fabric-loom:0.7-SNAPSHOT")
-    api("net.gudenau.lib:unsafe:latest.release")
-    api("user11681:reflect:1.9.1")
-    api("user11681:uncheck:latest.release")
+    api("net.fabricmc:fabric-loom:+")
+    api("net.gudenau.lib:unsafe:+")
+    api("user11681:reflect:+")
+    api("user11681:uncheck:+")
 
-    compileOnly("org.jetbrains:annotations:latest.release")
+    compileOnly("org.jetbrains:annotations:+")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:latest.release")
+    testImplementation("org.junit.jupiter:junit-jupiter:+")
 }
 
 java {
