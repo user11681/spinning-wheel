@@ -3,7 +3,6 @@ package user11681.wheel.extension;
 import groovy.lang.Closure;
 import java.util.Locale;
 import org.gradle.util.ConfigureUtil;
-import user11681.wheel.ProjectHandler;
 import user11681.wheel.dependency.RepositoryContainer;
 import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.publish.PublishingConfig;
@@ -14,13 +13,13 @@ public class WheelExtension {
     public String genSources = "genSources";
     public String minecraftVersion;
     public String yarnBuild;
-    public Compatibility javaVersion;
+    public Compatibility java;
     public PublishingConfig publish = new PublishingConfig();
     public RunDirectory run = new RunDirectory();
     public Channel channel = Channel.RELEASE;
 
-    public WheelExtension(ProjectHandler handler) {
-        this.javaVersion = new Compatibility(handler);
+    public WheelExtension() {
+        this.java = new Compatibility();
     }
 
     public static final RepositoryContainer repositories = new RepositoryContainer((RepositoryContainer dependencies) -> {
@@ -123,13 +122,13 @@ public class WheelExtension {
         this.publish.enabled = enabled;
     }
 
-    public void javaVersion(Closure<?> closure) {
-        ConfigureUtil.configure(closure, this.javaVersion);
+    public void java(Closure<?> closure) {
+        ConfigureUtil.configure(closure, this.java);
     }
 
-    public void setJavaVersion(Object version) {
-        this.javaVersion.setSource(version);
-        this.javaVersion.setTarget(version);
+    public void setJava(Object version) {
+        this.java.setSource(version);
+        this.java.setTarget(version);
     }
 
     public void setChannel(Object channel) {

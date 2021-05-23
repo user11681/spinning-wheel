@@ -21,6 +21,7 @@ import net.fabricmc.loom.task.GenerateSourcesTask;
 import net.fabricmc.loom.task.RemapJarTask;
 import net.fabricmc.loom.task.RunGameTask;
 import net.fabricmc.loom.task.UnpickJarTask;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -93,6 +94,7 @@ public class ProjectHandler {
 
     public LoomGradleExtension loom;
     public NamedDomainObjectContainer<RunConfigSettings> runConfigs;
+    public JavaPluginConvention javaConvention;
 
     public ProjectHandler(Project project) {
         this.project = project;
@@ -179,6 +181,14 @@ public class ProjectHandler {
         return this.project == this.rootProject;
     }
 
+    private String version(Object version) {
+        if (version == null) {
+            return this.extension.channel == Channel.RELEASE ? "8" : "16";
+        }
+
+        return (version.equals("latest") ? JavaVersion.current() : version).toString();
+    }
+
     public void handle() {
         this.project.afterEvaluate(ignored -> this.afterEvaluate());
 
@@ -199,8 +209,7 @@ public class ProjectHandler {
         // this.loom.shareCaches = false; // shareCaches = true prevents dev JAR remapping for some reason
         this.runConfigs = this.loom.getRunConfigs();
 
-        this.extension.javaVersion.setSource(8);
-        this.extension.javaVersion.setTarget(8);
+        this.extension.setJava(8);
 
         this.repositories.mavenLocal();
 
@@ -208,7 +217,9 @@ public class ProjectHandler {
     }
 
     private void afterEvaluate() {
-        SourceSet test = this.convention.getPlugin(JavaPluginConvention.class).getSourceSets().getByName("test");
+        this.javaConvention = this.convention.getPlugin(JavaPluginConvention.class);
+
+        SourceSet test = this.javaConvention.getSourceSets().getByName("test");
 
         this.runConfigs.create("testClient", settings -> {
             settings.client();
@@ -226,6 +237,9 @@ public class ProjectHandler {
 
         this.checkMinecraftVersion();
         this.checkYarnBuild();
+
+        this.<JavaCompile>task("compileJava").setSourceCompatibility(this.version(this.extension.java.source));
+        this.<JavaCompile>task("compileJava").setTargetCompatibility(this.version(this.extension.java.target));
 
         this.logger.lifecycle("Minecraft version: {}", this.extension.minecraftVersion);
         this.logger.lifecycle("Yarn build: {}", this.extension.yarnBuild);
