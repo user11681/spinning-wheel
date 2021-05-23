@@ -112,7 +112,7 @@ public class ProjectHandler {
         this.gradle = project.getGradle();
         this.buildScript = project.getBuildscript();
         this.logging = project.getLogging();
-        this.extension = this.extensions.create("wheel", WheelExtension.class, this);
+        this.extension = this.extensions.create("wheel", WheelExtension.class);
     }
 
     private static String meta(String endpoint, @Language("RegExp") String pattern) {
