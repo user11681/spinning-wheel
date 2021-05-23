@@ -21,6 +21,8 @@ allprojects {
     wheel {
         nospam = false
         publish = false
+        javaVersion = 16
+        channel = "snapshot"
     }
 }
 

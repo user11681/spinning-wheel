@@ -141,7 +141,7 @@ public class ProjectHandler {
 
     private void checkMinecraftVersion() {
         if (this.extension.minecraftVersion == null) {
-            if (latestMinecraftVersion == null) {
+            if (latestMinecraftVersion == null || this.isRoot()) {
                 latestMinecraftVersion = meta(
                     "game",
                     this.extension.channel == Channel.RELEASE
@@ -173,6 +173,10 @@ public class ProjectHandler {
 
     private <T extends Task> TaskCollection<T> task(Class<T> type) {
         return this.tasks.withType(type);
+    }
+
+    private boolean isRoot() {
+        return this.project == this.rootProject;
     }
 
     public void handle() {
@@ -328,7 +332,7 @@ public class ProjectHandler {
     }
 
     private void setRunDirectory() {
-        if (this.project == this.rootProject && this.extension.run.enabled) {
+        if (this.isRoot() && this.extension.run.enabled) {
             this.runConfigs.stream().map(RunConfigSettings::getRunDir).distinct().map(this.rootProject::file).map(File::toPath).forEach((ThrowingConsumer<Path>) (Path oldPath) -> {
                 String customPath = this.extension.run.path;
                 Path runPath = customPath == null ? this.loom.getUserCache().toPath().resolve("run") : Path.of(customPath);
