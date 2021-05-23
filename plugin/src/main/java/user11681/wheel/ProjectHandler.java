@@ -370,7 +370,16 @@ public class ProjectHandler {
                         }
                     }
 
+                    exists:
                     if (Files.exists(runPath)) {
+                        if (Files.isDirectory(oldPath)) {
+                            if (Files.list(oldPath).toList().isEmpty()) {
+                                Files.delete(oldPath);
+
+                                break exists;
+                            }
+                        }
+
                         makeOld(oldPath);
                     } else if (Files.isDirectory(oldPath)) {
                         Files.move(oldPath, runPath);
