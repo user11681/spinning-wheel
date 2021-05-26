@@ -2,7 +2,7 @@ package user11681.wheel.dependency;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
+import org.gradle.api.Action;
 import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.dependency.Repository;
 import user11681.wheel.util.Util;
@@ -10,8 +10,10 @@ import user11681.wheel.util.Util;
 public class RepositoryContainer {
     public final Map<String, Repository> repositories = new HashMap<>();
 
-    public RepositoryContainer(Consumer<RepositoryContainer> initializer) {
-        initializer.accept(this);
+    public RepositoryContainer configure(Action<RepositoryContainer> action) {
+        action.execute(this);
+
+        return this;
     }
 
     public String repository(String key) {
@@ -21,7 +23,7 @@ public class RepositoryContainer {
     }
 
     public Repository repository(String key, String url) {
-        return this.repositories.computeIfAbsent(Util.sanitize(key), (String key2) -> new Repository(key2, url));
+        return this.repositories.computeIfAbsent(Util.sanitize(key), key2 -> new Repository(key2, url));
     }
 
     public void putRepository(String key, String url) {
@@ -34,8 +36,8 @@ public class RepositoryContainer {
         String sanitizedDependency = Util.sanitize(dependency);
 
         return this.repositories.values().stream()
-            .flatMap((Repository repository) -> repository.dependencies.stream())
-            .filter((Dependency entry) -> Util.sanitize(entry.key()).equals(sanitizedDependency) || Util.sanitize(entry.artifact().split(":", 3)[1]).equals(sanitizedDependency))
+            .flatMap(repository -> repository.dependencies.stream())
+            .filter(entry -> Util.sanitize(entry.key()).equals(sanitizedDependency) || Util.sanitize(entry.artifact().split(":", 3)[1]).equals(sanitizedDependency))
             .findFirst().orElse(null);
     }
 }

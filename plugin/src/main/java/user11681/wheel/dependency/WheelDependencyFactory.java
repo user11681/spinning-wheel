@@ -6,7 +6,7 @@ import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 import org.gradle.api.internal.artifacts.DefaultDependencyFactory;
 import user11681.reflect.Classes;
-import user11681.wheel.ProjectHandler;
+import user11681.wheel.WheelPlugin;
 import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.WheelExtension;
 
@@ -27,8 +27,8 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
     }
 
     private static void addRepository(String repository) {
-        if (ProjectHandler.currentProject != null && repository != null) {
-            RepositoryHandler repositories = ProjectHandler.currentProject.getRepositories();
+        if (WheelPlugin.currentProject != null && repository != null) {
+            RepositoryHandler repositories = WheelPlugin.currentProject.getRepositories();
 
             for (ArtifactRepository artifactRepository : repositories) {
                 if (artifactRepository instanceof MavenArtifactRepository && repository.equals(((MavenArtifactRepository) artifactRepository).getUrl().toString())) {
@@ -79,8 +79,8 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
             return entry.artifact();
         }
 
-        if (ProjectHandler.currentProject != null && ProjectHandler.currentProject.findProject(dependency) != null) {
-            return ProjectHandler.currentProject.getDependencies().project(Map.of("path", dependency));
+        if (WheelPlugin.currentProject != null && WheelPlugin.currentProject.findProject(dependency) != null) {
+            return WheelPlugin.currentProject.getDependencies().project(Map.of("path", dependency));
         }
 
         return dependency;

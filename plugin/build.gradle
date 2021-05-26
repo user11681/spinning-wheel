@@ -10,7 +10,7 @@ gradlePlugin {
     plugins {
         wheel {
             id = "wheel"
-            implementationClass = "user11681.wheel.WheelPlugin"
+            implementationClass = "user11681.wheel.WheelFabricPlugin"
         }
     }
 }
@@ -20,12 +20,6 @@ repositories {
 
     maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
     maven {url = "https://maven.fabricmc.net"}
-}
-
-configurations.all {
-    resolutionStrategy {
-        it.cacheDynamicVersionsFor(0, "seconds")
-    }
 }
 
 dependencies {

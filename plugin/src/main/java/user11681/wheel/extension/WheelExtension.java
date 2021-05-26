@@ -7,12 +7,10 @@ import user11681.wheel.dependency.RepositoryContainer;
 import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.publish.PublishingConfig;
 
-public class WheelExtension {
-    public boolean nospam = true;
+public abstract class WheelExtension {
     public boolean clean = true;
     public String genSources = "genSources";
     public String minecraftVersion;
-    public String yarnBuild;
     public Compatibility java;
     public PublishingConfig publish = new PublishingConfig();
     public RunDirectory run = new RunDirectory();
@@ -22,7 +20,7 @@ public class WheelExtension {
         this.java = new Compatibility();
     }
 
-    public static final RepositoryContainer repositories = new RepositoryContainer((RepositoryContainer dependencies) -> {
+    public static final RepositoryContainer repositories = new RepositoryContainer().configure((RepositoryContainer dependencies) -> {
         dependencies.repository("auoeke", "https://auoeke.jfrog.io/artifactory/maven")
             .dependency("bason", "user11681:bason")
             .dependency("cell", "user11681:cell")
