@@ -1,0 +1,7 @@
+repositories {
+    maven {url = "https://maven.fabricmc.net"}
+}
+
+dependencies {
+    api("net.fabricmc:fabric-loom:0.7-SNAPSHOT")
+}

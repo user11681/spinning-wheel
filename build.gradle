@@ -1,39 +1,17 @@
 plugins {
-    id("wheel")
+    id("maven-publish")
 }
 
-subprojects {
-    afterEvaluate {
-        tasks.publish.enabled = false
+Project plugin = gradle.includedBuild("plugin").gradle.rootProject
+
+plugin.tasks.stream().filter({task -> task.name.startsWith("publish")}).each {task ->
+    tasks.findByName(task.name).with {
+        if (it) {
+            it.enabled = false
+        } else {
+            it = tasks.create(task.name)
+        }
+
+        it.dependsOn(task)
     }
-}
-
-tasks.publish.dependsOn(gradle.includedBuild("plugin").gradle.rootProject.tasks.publish)
-
-if (!plugins.hasPlugin("wheel")) {
-    return
-}
-
-allprojects {
-    group = "user11681"
-    version = "1.2.5"
-
-    wheel {
-        nospam = false
-        publish = false
-        channel = "snapshot"
-    }
-}
-
-repositories {
-    mavenLocal()
-}
-
-dependencies {
-    mod("arrp")
-    modInclude("api-screen-handler")
-    modInclude("api-screen")
-    bloated("auto-config")
-    intransitive("mod-menu")
-    mod("better-slabs")
 }

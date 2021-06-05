@@ -1,10 +1,13 @@
 package user11681.wheel;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -38,15 +41,17 @@ import org.gradle.jvm.tasks.Jar;
 import org.gradle.language.jvm.tasks.ProcessResources;
 import user11681.reflect.Accessor;
 import user11681.reflect.Classes;
+import user11681.uncheck.Uncheck;
 import user11681.wheel.dependency.WheelDependencyFactory;
 import user11681.wheel.dependency.configuration.BloatedDependencySet;
 import user11681.wheel.dependency.configuration.IntransitiveDependencySet;
-import user11681.wheel.extension.Channel;
 import user11681.wheel.extension.WheelExtension;
 import user11681.wheel.repository.WheelRepositoryFactory;
 
 @SuppressWarnings({"ResultOfMethodCallIgnored", "UnstableApiUsage"})
 public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Project> {
+    public final String MOD = "mod";
+
     public static Project currentProject;
 
     protected static String latestMinecraftVersion;
@@ -73,12 +78,16 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
     protected JavaPluginConvention javaConvention;
     protected SourceSetContainer sourceSets;
 
-    protected abstract String fetchMinecraftVersion();
-
     protected abstract String metadataFile();
+
+    protected abstract void checkMinecraftVersion();
 
     protected static HttpClient http() {
         return httpClient == null ? httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build() : httpClient;
+    }
+
+    protected static String get(String uri) {
+        return Uncheck.handle(() -> http().send(HttpRequest.newBuilder(new URI(uri)).GET().build(), HttpResponse.BodyHandlers.ofString()).body());
     }
 
     protected static void makeOld(Path path) throws IOException {
@@ -92,25 +101,26 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
         Files.move(path, moveOldPath);
     }
 
-    protected void configurePublication(MavenPublication publication) {
-        publication.setGroupId(String.valueOf(this.project.getGroup()));
-        publication.setArtifactId(this.project.getName());
-        publication.setVersion(String.valueOf(this.project.getVersion()));
+    protected void enqueue(Task task) {
+        this.finished(() -> execute(task));
     }
 
-    protected void checkMinecraftVersion() {
-        if (this.extension.minecraftVersion == null) {
-            if (latestMinecraftVersion == null || this.isRoot()) {
-                latestMinecraftVersion = this.fetchMinecraftVersion();
-            }
+    protected void enqueue(String task) {
+        this.finished(() -> execute(this.task(task)));
+    }
 
-            this.extension.minecraftVersion = latestMinecraftVersion;
+    private static void execute(Task task) {
+        task.getTaskDependencies().getDependencies(task).forEach(WheelPlugin::execute);
+        task.getActions().forEach(action -> action.execute(task));
+    }
+
+    protected void apply(Project project, String plugin, Class<E> extensionClass) {
+        if (project.getPlugins().hasPlugin(plugin)) {
+            throw new IllegalStateException("%s must be either specified before wheel without being applied or not specified at all.".formatted(plugin));
         }
 
-        this.logger.lifecycle("Minecraft version: {}", this.extension.minecraftVersion);
-    }
+        latestMinecraftVersion = null;
 
-    public void apply(Project project, Class<E> extensionClass) {
         this.project = currentProject = project;
         this.rootProject = project.getRootProject();
         this.plugins = project.getPlugins();
@@ -133,17 +143,20 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
         Classes.reinterpret(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.klass);
         Classes.reinterpret(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.klass);
 
+        this.plugins.apply(plugin);
         this.applyPlugins();
-        this.java.withSourcesJar();
         this.addRepositories();
         this.configureConfigurations();
     }
 
-    protected void afterEvaluate() {
-        this.javaConvention = this.convention.getPlugin(JavaPluginConvention.class);
-        this.sourceSets = this.javaConvention.getSourceSets();
+    protected void configurePublication(MavenPublication publication) {
+        publication.setGroupId(String.valueOf(this.project.getGroup()));
+        publication.setArtifactId(this.project.getName());
+        publication.setVersion(String.valueOf(this.project.getVersion()));
+    }
 
-        this.checkMinecraftVersion();
+    protected void afterEvaluate() {
+        this.checkVersions();
 
         this.<JavaCompile>task("compileJava").setSourceCompatibility(this.compatibilityVersion(this.extension.java.source));
         this.<JavaCompile>task("compileJava").setTargetCompatibility(this.compatibilityVersion(this.extension.java.target));
@@ -155,10 +168,10 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
             this.task("clean").finalizedBy("build");
         }
 
-        this.task(JavaCompile.class).forEach(task -> task.getOptions().setEncoding("UTF-8"));
-        this.task(Jar.class).forEach(task -> task.from("LICENSE"));
+        this.tasks(JavaCompile.class).forEach(task -> task.getOptions().setEncoding("UTF-8"));
+        this.tasks(Jar.class).forEach(task -> task.from("LICENSE"));
 
-        this.task(ProcessResources.class).forEach(task -> task.filesMatching(
+        this.tasks(ProcessResources.class).forEach(task -> task.filesMatching(
             this.metadataFile(),
             file -> file.filter(contents -> contents.replaceAll("\\$(\\{version}|version)", String.valueOf(this.project.getVersion())))
         ));
@@ -192,6 +205,9 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
         this.plugins.apply(MavenPublishPlugin.class);
 
         this.java = this.extensions.getByType(JavaPluginExtension.class);
+        this.java.withSourcesJar();
+        this.javaConvention = this.convention.getPlugin(JavaPluginConvention.class);
+        this.sourceSets = this.javaConvention.getSourceSets();
     }
 
     protected void addRepositories() {
@@ -215,7 +231,7 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
         Configuration modInclude = this.configurations.create("modInclude").extendsFrom(bloatedInclude, intransitiveInclude);
         Configuration apiInclude = this.configurations.create("apiInclude");
 
-        this.configurations.create("mod").extendsFrom(modInclude, bloated, intransitive);
+        this.configurations.create(MOD).extendsFrom(modInclude, bloated, intransitive);
 
         Classes.reinterpret(bloated.getDependencies(), BloatedDependencySet.klass);
         Classes.reinterpret(bloatedInclude.getDependencies(), BloatedDependencySet.klass);
@@ -226,24 +242,32 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
         this.configuration("include").extendsFrom(apiInclude, modInclude);
     }
 
+    protected void checkVersions() {
+        this.checkMinecraftVersion();
+        this.logger.lifecycle("Minecraft version: {}", this.extension.minecraft);
+    }
+
+    protected String compatibilityVersion(Object version) {
+        return "8";
+    }
+
     protected boolean isRoot() {
         return this.project == this.rootProject;
     }
 
-    protected String compatibilityVersion(Object version) {
-        if (version == null) {
-            return this.extension.channel == Channel.RELEASE ? "8" : "16";
-        }
+    protected <T extends Task> TaskCollection<T> tasks(Class<T> type) {
+        return this.tasks.withType(type);
+    }
 
-        return (version.equals("latest") ? JavaVersion.current() : version).toString();
+    protected <T extends Task> T task(Class<T> type) {
+        TaskCollection<T> tasks = this.tasks.withType(type);
+        assert tasks.size() == 1;
+
+        return tasks.iterator().next();
     }
 
     protected <T extends Task> T task(String name) {
         return (T) this.tasks.getByName(name);
-    }
-
-    protected <T extends Task> TaskCollection<T> task(Class<T> type) {
-        return this.tasks.withType(type);
     }
 
     protected SourceSet sourceSet(String name) {
@@ -252,5 +276,13 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
 
     protected Configuration configuration(String name) {
         return this.configurations.getByName(name);
+    }
+
+    protected void finished(Runnable action) {
+        this.gradle.buildFinished(result -> action.run());
+    }
+
+    protected File file(Object path) {
+        return this.project.file(path);
     }
 }

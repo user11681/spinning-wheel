@@ -1,56 +1,65 @@
-plugins {
-    id("java-gradle-plugin")
-    id("maven-publish")
-}
+allprojects {
+    plugins.apply("maven-publish")
+    plugins.apply("java-library")
 
-group = "user11681"
-version = "0-SNAPSHOT"
+    group = "user11681"
+    version = "0-SNAPSHOT"
 
-gradlePlugin {
-    plugins {
-        wheel {
-            id = "wheel"
-            implementationClass = "user11681.wheel.WheelFabricPlugin"
+    sourceCompatibility = 15
+    targetCompatibility = 15
+
+    repositories {
+        mavenCentral()
+
+        maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
+    }
+
+    dependencies {
+        api(gradleApi())
+
+        api("net.gudenau.lib:unsafe:latest.integration")
+        api("user11681:reflect:latest.integration")
+        api("user11681:uncheck:latest.integration")
+
+        compileOnly("org.jetbrains:annotations:latest.integration")
+    }
+
+    java {
+        withSourcesJar()
+    }
+
+    jar {
+        from(rootProject.file("../LICENSE"))
+    }
+
+    publishing {
+        repositories {
+            mavenLocal()
+
+            maven {
+                url = "https://auoeke.jfrog.io/artifactory/maven"
+
+                credentials {
+                    username = System.properties["maven.username"]
+                    password = System.properties["maven.password"]
+                }
+            }
         }
     }
 }
 
-repositories {
-    mavenCentral()
+subprojects {
+    plugins.apply("java-gradle-plugin")
 
-    maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
-    maven {url = "https://maven.fabricmc.net"}
-}
+    dependencies {
+        api(rootProject)
+    }
 
-dependencies {
-    api("net.fabricmc:fabric-loom:+")
-    api("net.gudenau.lib:unsafe:+")
-    api("user11681:reflect:+")
-    api("user11681:uncheck:+")
-
-    compileOnly("org.jetbrains:annotations:+")
-
-    testImplementation("org.junit.jupiter:junit-jupiter:+")
-}
-
-java {
-    withSourcesJar()
-}
-
-jar {
-    from(file("LICENSE"))
-}
-
-publishing {
-    repositories {
-        mavenLocal()
-
-        maven {
-            url = "https://auoeke.jfrog.io/artifactory/maven"
-
-            credentials {
-                username = System.properties["maven.username"]
-                password = System.properties["maven.password"]
+    gradlePlugin {
+        plugins {
+            create(project.name) {
+                id = project.name
+                implementationClass = "user11681.wheel.Wheel${project.name.replace("wheel-", "").capitalize()}Plugin"
             }
         }
     }

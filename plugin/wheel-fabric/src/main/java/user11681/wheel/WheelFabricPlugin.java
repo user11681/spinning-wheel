@@ -1,9 +1,6 @@
 package user11681.wheel;
 
 import java.io.File;
-import java.net.URI;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,12 +10,12 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.fabricmc.loom.LoomGradleExtension;
-import net.fabricmc.loom.LoomGradlePlugin;
 import net.fabricmc.loom.configuration.ide.RunConfigSettings;
 import net.fabricmc.loom.task.GenerateSourcesTask;
 import net.fabricmc.loom.task.RemapJarTask;
 import net.fabricmc.loom.task.RunGameTask;
-import net.fabricmc.loom.task.UnpickJarTask;
+import net.fabricmc.loom.util.Constants;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.publish.maven.MavenPublication;
@@ -26,7 +23,6 @@ import org.gradle.api.tasks.SourceSet;
 import org.intellij.lang.annotations.Language;
 import user11681.reflect.Invoker;
 import user11681.uncheck.ThrowingConsumer;
-import user11681.uncheck.Uncheck;
 import user11681.wheel.extension.Channel;
 import user11681.wheel.extension.WheelFabricExtension;
 import user11681.wheel.util.ThrowingAction;
@@ -34,15 +30,11 @@ import user11681.wheel.util.ThrowingAction;
 public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
     private static final Map<String, String> latestYarnBuilds = new HashMap<>();
 
-    public LoomGradleExtension loom;
-    public NamedDomainObjectContainer<RunConfigSettings> runConfigs;
+    private LoomGradleExtension loom;
+    private NamedDomainObjectContainer<RunConfigSettings> runConfigs;
 
     private static String meta(String endpoint, @Language("RegExp") String pattern) {
-        Matcher matcher = Uncheck.handle(() -> Pattern.compile(pattern).matcher(http().send(
-            HttpRequest.newBuilder().GET().uri(new URI("https://meta.fabricmc.net/v2/versions/" + endpoint)).build(),
-            HttpResponse.BodyHandlers.ofString()
-        ).body()));
-
+        Matcher matcher = Pattern.compile(pattern).matcher(get("https://meta.fabricmc.net/v2/versions/" + endpoint));
         matcher.find();
 
         return matcher.group();
@@ -50,25 +42,11 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
 
     @Override
     public void apply(Project project) {
-        if (project.getPlugins().hasPlugin("fabric-loom")) {
-            throw new IllegalStateException("fabric-loom must be either specified before wheel without being applied or not specified at all.");
-        }
-
-        super.apply(project, WheelFabricExtension.class);
+        super.apply(project, "fabric-loom", WheelFabricExtension.class);
 
         this.loom = this.extensions.getByType(LoomGradleExtension.class);
         // this.loom.shareCaches = false; // shareCaches = true prevents dev JAR remapping for some reason
         this.runConfigs = this.loom.getRunConfigs();
-    }
-
-    @Override
-    protected String fetchMinecraftVersion() {
-        return meta(
-            "game",
-            this.extension.channel == Channel.RELEASE
-                ? "(?<=\"version\": \").*?(?=\",\\s*\"stable\": true)"
-                : "(?<=\"version\": \").*?(?=\")"
-        );
     }
 
     @Override
@@ -78,10 +56,21 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
 
     @Override
     protected void checkMinecraftVersion() {
-        super.checkMinecraftVersion();
+        if (this.extension.minecraft == null) {
+            if (latestMinecraftVersion == null) {
+                latestMinecraftVersion = meta(
+                    "game",
+                    this.extension.channel == Channel.RELEASE
+                        ? "(?<=\"version\": \").*?(?=\",\\s*\"stable\": true)"
+                        : "(?<=\"version\": \").*?(?=\")"
+                );
+            }
+
+            this.extension.minecraft = latestMinecraftVersion;
+        }
 
         if (this.extension.yarnBuild == null) {
-            this.extension.yarnBuild = latestYarnBuilds.computeIfAbsent(this.extension.minecraftVersion, minecraftVersion -> meta(
+            this.extension.yarnBuild = latestYarnBuilds.computeIfAbsent(this.extension.minecraft, minecraftVersion -> meta(
                 "yarn/" + minecraftVersion,
                 "(?<=\"build\": )\\d+"
             ));
@@ -114,23 +103,16 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
     }
 
     @Override
-    protected void applyPlugins() {
-        super.applyPlugins();
-
-        this.plugins.apply(LoomGradlePlugin.class);
-    }
-
-    @Override
     protected void addDependencies() {
         super.addDependencies();
 
-        this.dependencies.add("minecraft", "com.mojang:minecraft:" + this.extension.minecraftVersion);
-        this.dependencies.add("mappings", "net.fabricmc:yarn:%s+build.%s:v2".formatted(this.extension.minecraftVersion, this.extension.yarnBuild));
-        this.dependencies.add("mod", "net.fabricmc:fabric-loader:latest.release");
+        this.dependencies.add(Constants.Configurations.MINECRAFT, "com.mojang:minecraft:" + this.extension.minecraft);
+        this.dependencies.add(Constants.Configurations.MAPPINGS, "net.fabricmc:yarn:%s+build.%s:v2".formatted(this.extension.minecraft, this.extension.yarnBuild));
+        this.dependencies.add(MOD, "net.fabricmc:fabric-loader:latest.release");
 
         if (this.extension.nospam) {
-            this.dependencies.add("mod", "narrator-off");
-            this.dependencies.add("mod", "noauth");
+            this.dependencies.add(MOD, "narrator-off");
+            this.dependencies.add(MOD, "noauth");
         }
     }
 
@@ -138,7 +120,16 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
     protected void configureConfigurations() {
         super.configureConfigurations();
 
-        this.configuration("modApi").extendsFrom(this.configuration("mod"));
+        this.configuration("modApi").extendsFrom(this.configuration(MOD));
+    }
+
+    @Override
+    protected String compatibilityVersion(Object version) {
+        if (version == null) {
+            return this.extension.channel == Channel.RELEASE ? "8" : "16";
+        }
+
+        return (version.equals("latest") ? JavaVersion.current() : version).toString();
     }
 
     @Override
@@ -164,18 +155,12 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
 
     private void generateSources() throws Throwable {
         if (this.extension.genSources != null) {
-            GenerateSourcesTask genSources = (GenerateSourcesTask) this.tasks.findByName(this.extension.genSources);
+            GenerateSourcesTask genSources = this.task(this.extension.genSources);
 
-            if (genSources != null) {
-                if (!((File) Invoker.bind(genSources, "getMappedJarFileWithSuffix", File.class, String.class).invoke("-sources.jar")).exists()) {
-                    this.logger.lifecycle("sources not found; running genSources");
+            if (!((File) Invoker.bind(genSources, "getMappedJarFileWithSuffix", File.class, String.class).invoke("-sources.jar")).exists()) {
+                this.logger.lifecycle("Sources not found; running {}.", genSources.getName());
 
-                    if (this.loom.getMappingsProvider().hasUnpickDefinitions()) {
-                        this.<UnpickJarTask>task("unpickJar").exec();
-                    }
-
-                    genSources.doTask();
-                }
+                this.enqueue(genSources);
             }
         }
     }
@@ -208,7 +193,7 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
                     exists:
                     if (Files.exists(runPath)) {
                         if (Files.isDirectory(oldPath)) {
-                            if (Files.list(oldPath).toList().isEmpty()) {
+                            if (Files.list(oldPath).count() == 0) {
                                 Files.delete(oldPath);
 
                                 break exists;

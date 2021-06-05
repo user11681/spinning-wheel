@@ -1,0 +1,18 @@
+plugins {
+    //id("wheel-forge").version("+")
+}
+
+group = "test"
+version = "0.1.2"
+
+if (!plugins.hasPlugin("wheel-forge")) {
+    return
+}
+
+wheel {
+    publish = false
+}
+
+dependencies {
+    include("reflect")
+}

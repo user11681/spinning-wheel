@@ -1,7 +1,6 @@
 package user11681.wheel.extension;
 
 import groovy.lang.Closure;
-import java.util.Locale;
 import org.gradle.util.ConfigureUtil;
 import user11681.wheel.dependency.RepositoryContainer;
 import user11681.wheel.extension.dependency.Dependency;
@@ -10,15 +9,10 @@ import user11681.wheel.extension.publish.PublishingConfig;
 public abstract class WheelExtension {
     public boolean clean = true;
     public String genSources = "genSources";
-    public String minecraftVersion;
-    public Compatibility java;
+    public String minecraft;
+    public Compatibility java = new Compatibility();
     public PublishingConfig publish = new PublishingConfig();
     public RunDirectory run = new RunDirectory();
-    public Channel channel = Channel.RELEASE;
-
-    public WheelExtension() {
-        this.java = new Compatibility();
-    }
 
     public static final RepositoryContainer repositories = new RepositoryContainer().configure((RepositoryContainer dependencies) -> {
         dependencies.repository("auoeke", "https://auoeke.jfrog.io/artifactory/maven")
@@ -127,9 +121,5 @@ public abstract class WheelExtension {
     public void setJava(Object version) {
         this.java.setSource(version);
         this.java.setTarget(version);
-    }
-
-    public void setChannel(Object channel) {
-        this.channel = Channel.valueOf(String.valueOf(channel).toUpperCase(Locale.ROOT));
     }
 }

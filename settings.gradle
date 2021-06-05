@@ -10,5 +10,4 @@ pluginManagement {
 rootProject.name = "testbuild"
 
 includeBuild("plugin")
-
-include("sub")
+includeBuild("test")

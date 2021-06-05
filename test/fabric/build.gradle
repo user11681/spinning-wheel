@@ -1,0 +1,34 @@
+plugins {
+    id("wheel-fabric").version("+")
+}
+
+allprojects {
+    afterEvaluate {
+        tasks.publish.enabled = false
+    }
+}
+
+if (!plugins.hasPlugin("wheel-fabric")) {
+    return
+}
+
+allprojects {
+    group = "user11681"
+    version = "1.2.5"
+
+    wheel {
+        nospam = false
+        publish = false
+        minecraft = "21w20a"
+//        channel = "snapshot"
+    }
+}
+
+dependencies {
+    mod("arrp")
+    modInclude("api-screen-handler")
+    modInclude("api-screen")
+    bloated("auto-config")
+    intransitive("mod-menu")
+    mod("better-slabs")
+}

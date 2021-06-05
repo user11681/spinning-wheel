@@ -69,14 +69,14 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
             Dependency entry = WheelExtension.dependency(components[0]);
 
             if (addRepository(entry)) {
-                return changeVersion(entry.artifact(), components[1]);
+                return changeVersion(entry.artifact, components[1]);
             }
         }
 
         Dependency entry = WheelExtension.dependency(dependency);
 
         if (addRepository(entry)) {
-            return entry.artifact();
+            return entry.artifact;
         }
 
         if (WheelPlugin.currentProject != null && WheelPlugin.currentProject.findProject(dependency) != null) {
