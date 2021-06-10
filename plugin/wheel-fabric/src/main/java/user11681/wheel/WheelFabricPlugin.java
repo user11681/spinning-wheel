@@ -25,8 +25,8 @@ import user11681.reflect.Invoker;
 import user11681.uncheck.ThrowingConsumer;
 import user11681.wheel.extension.Channel;
 import user11681.wheel.extension.WheelFabricExtension;
-import user11681.wheel.util.ThrowingAction;
 
+@SuppressWarnings("unused")
 public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
     private static final Map<String, String> latestYarnBuilds = new HashMap<>();
 
@@ -78,7 +78,17 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
     }
 
     @Override
-    protected void afterEvaluate() {
+    protected void configurePublication(MavenPublication publication) {
+        super.configurePublication(publication);
+
+        RemapJarTask remapJar = this.task("remapJar");
+
+        publication.artifact(remapJar).builtBy(remapJar);
+        publication.artifact(this.task("sourcesJar")).builtBy(this.task("remapSourcesJar"));
+    }
+
+    @Override
+    protected void afterEvaluate() throws Throwable {
         super.afterEvaluate();
 
         this.logger.lifecycle("Yarn build: {}", this.extension.yarnBuild);
@@ -98,8 +108,12 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
 
             this.runTask(settings).classpath(test.getRuntimeClasspath());
         });
+    }
 
-        this.project.afterEvaluate((ThrowingAction<Project>) project -> this.afterLoom());
+    @Override
+    protected void afterMain() throws Throwable {
+        this.generateSources();
+        this.setRunDirectory();
     }
 
     @Override
@@ -132,25 +146,10 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
         return (version.equals("latest") ? JavaVersion.current() : version).toString();
     }
 
-    @Override
-    protected void configurePublication(MavenPublication publication) {
-        super.configurePublication(publication);
-
-        RemapJarTask remapJar = this.task("remapJar");
-
-        publication.artifact(remapJar).builtBy(remapJar);
-        publication.artifact(this.task("sourcesJar")).builtBy(this.task("remapSourcesJar"));
-    }
-
     private RunGameTask runTask(RunConfigSettings configuration) {
         String name = configuration.getName();
 
         return this.task("run" + name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1));
-    }
-
-    private void afterLoom() throws Throwable {
-        this.generateSources();
-        this.setRunDirectory();
     }
 
     private void generateSources() throws Throwable {

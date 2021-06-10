@@ -3,21 +3,29 @@ package user11681.wheel;
 import com.github.jengelman.gradle.plugins.shadow.ShadowBasePlugin;
 import com.github.jengelman.gradle.plugins.shadow.ShadowPlugin;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilderFactory;
 import net.minecraftforge.gradle.common.util.MojangLicenseHelper;
-import net.minecraftforge.gradle.common.util.RunConfig;
 import net.minecraftforge.gradle.userdev.DependencyManagementExtension;
 import net.minecraftforge.gradle.userdev.UserDevExtension;
-import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.publish.maven.MavenPublication;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.gradle.plugins.MixinExtension;
 import org.spongepowered.asm.gradle.plugins.MixinGradlePlugin;
 import org.w3c.dom.Node;
 import user11681.uncheck.Uncheck;
 import user11681.wheel.extension.WheelForgeExtension;
+import user11681.wheel.loader.TransformingClassLoader;
 
+@SuppressWarnings("unused")
 public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
     private static final String FORGE_URL = "https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml";
     private static final String GEN_INTELLIJ_RUNS = "genIntellijRuns";
@@ -37,6 +45,10 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
 
     private static Stream<String> nodeStream(Node first) {
         return Stream.iterate(first, Objects::nonNull, Node::getNextSibling).map(Node::getTextContent);
+    }
+
+    private static void withMethod(String name, ClassNode type, Consumer<MethodNode> action) {
+        type.methods.stream().filter(method -> method.name.equals(name)).findAny().ifPresent(action);
     }
 
     @Override
@@ -86,10 +98,50 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
     }
 
     @Override
-    protected void checkVersions() {
-        super.checkVersions();
+    protected void transform() {
+        TransformingClassLoader.addTransformer("net.minecraftforge.gradle.common.util.Utils", type -> {
+            String lambdaName = "lambda$createRunConfigTasks$13";
+            Type projectType = Type.getType(Project.class);
 
-        this.logger.lifecycle("Forge version: {}", this.extension.forge);
+            withMethod(lambdaName, type, method -> {
+                Type[] argumentTypes = Type.getArgumentTypes(method.desc);
+                argumentTypes[argumentTypes.length - 1] = projectType;
+                method.desc = Type.getMethodDescriptor(Type.getType(void.class), argumentTypes);
+            });
+            withMethod("createRunConfigTasks", type, method -> {
+                AbstractInsnNode instruction = method.instructions.getFirst();
+
+                while (instruction != null) {
+                    if (instruction instanceof MethodInsnNode invocation) {
+                        switch (invocation.name) {
+                            case "projectsEvaluated" -> {
+                                invocation.owner = Type.getInternalName(Project.class);
+                                invocation.name = "afterEvaluate";
+                            }
+                            case "getGradle" -> {
+                                instruction = instruction.getNext();
+                                method.instructions.remove(instruction.getPrevious());
+                                instruction = instruction.getPrevious();
+                            }
+                        }
+                    } else {
+                        if (instruction instanceof InvokeDynamicInsnNode lambda) {
+                            Handle handle = (Handle) lambda.bsmArgs[1];
+
+                            if (handle.getName().equals(lambdaName)) {
+                                Type[] argumentTypes = Type.getArgumentTypes(handle.getDesc());
+                                argumentTypes[argumentTypes.length - 1] = projectType;
+
+                                lambda.bsmArgs[1] = new Handle(handle.getTag(), handle.getOwner(), handle.getName(), Type.getMethodDescriptor(Type.getType(void.class), argumentTypes), false);
+                                lambda.bsmArgs[2] = Type.getMethodType(Type.getType(void.class), projectType);
+                            }
+                        }
+                    }
+
+                    instruction = instruction.getNext();
+                }
+            });
+        });
     }
 
     @Override
@@ -103,10 +155,11 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
     }
 
     @Override
-    protected void afterEvaluate() {
-        super.afterEvaluate();
+    protected void afterMain() {
+        this.generateRunConfigurations();
 
-        this.project.afterEvaluate(ignored -> this.afterForge());
+        this.enqueue(MojangLicenseHelper.HIDE_LICENSE);
+        this.enqueue(GEN_INTELLIJ_RUNS);
     }
 
     @Override
@@ -118,7 +171,7 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
 
         this.dependencyExtension = this.extensions.getByType(DependencyManagementExtension.class);
         this.userdevExtension = this.extensions.getByType(UserDevExtension.class);
-        // this.extensions.getByType(MixinExtension.class).add(this.sourceSet("main"), this.project.getName() + ".refmap.json");
+        this.extensions.getByType(MixinExtension.class).add(this.sourceSet("main"), this.project.getName() + ".refmap.json");
     }
 
     @Override
@@ -142,11 +195,11 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
         super.configureConfigurations();
     }
 
-    private void afterForge() {
-        this.generateRunConfigurations();
+    @Override
+    protected void checkVersions() {
+        super.checkVersions();
 
-        this.enqueue(MojangLicenseHelper.HIDE_LICENSE);
-        this.enqueue(GEN_INTELLIJ_RUNS);
+        this.logger.lifecycle("Forge version: {}", this.extension.forge);
     }
 
     private void generateRunConfigurations() {

@@ -46,7 +46,9 @@ import user11681.wheel.dependency.WheelDependencyFactory;
 import user11681.wheel.dependency.configuration.BloatedDependencySet;
 import user11681.wheel.dependency.configuration.IntransitiveDependencySet;
 import user11681.wheel.extension.WheelExtension;
+import user11681.wheel.loader.TransformingClassLoader;
 import user11681.wheel.repository.WheelRepositoryFactory;
+import user11681.wheel.util.ThrowingAction;
 
 @SuppressWarnings({"ResultOfMethodCallIgnored", "UnstableApiUsage"})
 public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Project> {
@@ -115,6 +117,8 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
     }
 
     protected void apply(Project project, String plugin, Class<E> extensionClass) {
+        this.transform();
+
         if (project.getPlugins().hasPlugin(plugin)) {
             throw new IllegalStateException("%s must be either specified before wheel without being applied or not specified at all.".formatted(plugin));
         }
@@ -138,7 +142,7 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
         this.logging = project.getLogging();
         this.extension = this.extensions.create("wheel", extensionClass);
 
-        project.afterEvaluate(ignored -> this.afterEvaluate());
+        project.afterEvaluate((ThrowingAction<Project>) ignored -> this.afterEvaluate());
 
         Classes.reinterpret(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.klass);
         Classes.reinterpret(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.klass);
@@ -149,13 +153,17 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
         this.configureConfigurations();
     }
 
+    protected void transform() {}
+
     protected void configurePublication(MavenPublication publication) {
         publication.setGroupId(String.valueOf(this.project.getGroup()));
         publication.setArtifactId(this.project.getName());
         publication.setVersion(String.valueOf(this.project.getVersion()));
     }
 
-    protected void afterEvaluate() {
+    protected void afterEvaluate() throws Throwable {
+        this.project.afterEvaluate((ThrowingAction<Project>) ignored -> this.afterMain());
+
         this.checkVersions();
 
         this.<JavaCompile>task("compileJava").setSourceCompatibility(this.compatibilityVersion(this.extension.java.source));
@@ -199,6 +207,8 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
             }
         }
     }
+
+    protected void afterMain() throws Throwable {}
 
     protected void applyPlugins() {
         this.plugins.apply(JavaLibraryPlugin.class);
@@ -284,5 +294,9 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
 
     protected File file(Object path) {
         return this.project.file(path);
+    }
+
+    static {
+        Classes.reinterpret(WheelPlugin.class.getClassLoader(), TransformingClassLoader.klass);
     }
 }

@@ -3,5 +3,5 @@ repositories {
 }
 
 dependencies {
-    api("net.fabricmc:fabric-loom:0.7-SNAPSHOT")
+    api("net.fabricmc:fabric-loom:latest.integration")
 }

@@ -4,14 +4,17 @@ plugins {
 
 Project plugin = gradle.includedBuild("plugin").gradle.rootProject
 
-plugin.tasks.stream().filter({task -> task.name.startsWith("publish")}).each {task ->
-    tasks.findByName(task.name).with {
-        if (it) {
-            it.enabled = false
-        } else {
-            it = tasks.create(task.name)
-        }
+plugin.tasks.all {Task task ->
+    if (task.group == "publishing") {
+        tasks.findByName(task.name).with {
+            if (it) {
+                it.enabled = false
+            } else {
+                it = tasks.create(task.name)
+                it.group = "publishing"
+            }
 
-        it.dependsOn(task)
+            it.dependsOn(task)
+        }
     }
 }

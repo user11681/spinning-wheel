@@ -1,5 +1,5 @@
 plugins {
-    id("wheel-fabric").version("+")
+    id("wheel-fabric").version("latest.integration")
 }
 
 allprojects {
@@ -19,8 +19,7 @@ allprojects {
     wheel {
         nospam = false
         publish = false
-        minecraft = "21w20a"
-//        channel = "snapshot"
+        channel = "latest"
     }
 }
 

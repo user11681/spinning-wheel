@@ -5,8 +5,8 @@ allprojects {
     group = "user11681"
     version = "0-SNAPSHOT"
 
-    sourceCompatibility = 15
-    targetCompatibility = 15
+    sourceCompatibility = 16
+    targetCompatibility = 16
 
     repositories {
         mavenCentral()
@@ -20,6 +20,8 @@ allprojects {
         api("net.gudenau.lib:unsafe:latest.integration")
         api("user11681:reflect:latest.integration")
         api("user11681:uncheck:latest.integration")
+        api("org.ow2.asm:asm:latest.integration")
+        api("org.ow2.asm:asm-tree:latest.integration")
 
         compileOnly("org.jetbrains:annotations:latest.integration")
     }
@@ -57,7 +59,7 @@ subprojects {
 
     gradlePlugin {
         plugins {
-            create(project.name) {
+            register(project.name) {
                 id = project.name
                 implementationClass = "user11681.wheel.Wheel${project.name.replace("wheel-", "").capitalize()}Plugin"
             }
