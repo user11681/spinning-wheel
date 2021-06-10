@@ -21,10 +21,12 @@ import org.gradle.api.Project;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.SourceSet;
 import org.intellij.lang.annotations.Language;
+import user11681.reflect.Accessor;
 import user11681.reflect.Invoker;
 import user11681.uncheck.ThrowingConsumer;
 import user11681.wheel.extension.Channel;
 import user11681.wheel.extension.WheelFabricExtension;
+import user11681.wheel.util.FilteredPrintStream;
 
 @SuppressWarnings("unused")
 public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
@@ -45,8 +47,9 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
         super.apply(project, "fabric-loom", WheelFabricExtension.class);
 
         this.loom = this.extensions.getByType(LoomGradleExtension.class);
-        // this.loom.shareCaches = false; // shareCaches = true prevents dev JAR remapping for some reason
         this.runConfigs = this.loom.getRunConfigs();
+
+        Accessor.putObject(System.class, "out", new FilteredPrintStream(System.out));
     }
 
     @Override
