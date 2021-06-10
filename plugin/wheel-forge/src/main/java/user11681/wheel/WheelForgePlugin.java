@@ -6,15 +6,16 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilderFactory;
-import net.minecraftforge.gradle.common.util.MojangLicenseHelper;
 import net.minecraftforge.gradle.userdev.DependencyManagementExtension;
 import net.minecraftforge.gradle.userdev.UserDevExtension;
 import org.gradle.api.Project;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -48,7 +49,7 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
     }
 
     private static void withMethod(String name, ClassNode type, Consumer<MethodNode> action) {
-        type.methods.stream().filter(method -> method.name.equals(name)).findAny().ifPresent(action);
+        type.methods.stream().filter(method -> method.name.equals(name)).forEach(action);
     }
 
     @Override
@@ -99,6 +100,12 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
 
     @Override
     protected void transform() {
+        TransformingClassLoader.addTransformer("net.minecraftforge.gradle.common.util.MojangLicenseHelper", type -> {
+            withMethod("displayWarning", type, method -> {
+                method.instructions.clear();
+                method.instructions.add(new InsnNode(Opcodes.RETURN));
+            });
+        });
         TransformingClassLoader.addTransformer("net.minecraftforge.gradle.common.util.Utils", type -> {
             String lambdaName = "lambda$createRunConfigTasks$13";
             Type projectType = Type.getType(Project.class);
@@ -158,7 +165,6 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
     protected void afterMain() {
         this.generateRunConfigurations();
 
-        this.enqueue(MojangLicenseHelper.HIDE_LICENSE);
         this.enqueue(GEN_INTELLIJ_RUNS);
     }
 
