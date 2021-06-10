@@ -48,8 +48,6 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
 
         this.loom = this.extensions.getByType(LoomGradleExtension.class);
         this.runConfigs = this.loom.getRunConfigs();
-
-        Accessor.putObject(System.class, "out", new FilteredPrintStream(System.out));
     }
 
     @Override
@@ -212,5 +210,9 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
                 Files.createSymbolicLink(oldPath, runPath);
             });
         }
+    }
+
+    static {
+        Accessor.putObject(System.class, "out", new FilteredPrintStream(System.out));
     }
 }
