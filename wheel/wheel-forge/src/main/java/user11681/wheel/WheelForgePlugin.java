@@ -27,6 +27,7 @@ import user11681.reflect.Classes;
 import user11681.uncheck.Uncheck;
 import user11681.wheel.extension.WheelForgeExtension;
 import user11681.wheel.loader.TransformingClassLoader;
+import user11681.wheel.util.FilteredPrintStream;
 import user11681.wheel.util.GroovyUtil;
 
 @SuppressWarnings("unused")
@@ -60,6 +61,8 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
         super.apply(project, "net.minecraftforge.gradle", WheelForgeExtension.class);
 
         this.project.defaultTasks("genIntellijRuns");
+
+        Accessor.putObject(System.class, "out", new FilteredPrintStream(System.out));
     }
 
     @Override
