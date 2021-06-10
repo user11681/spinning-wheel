@@ -23,7 +23,7 @@ public class TransformingClassLoader extends VisitableURLClassLoader {
         super(name, parent, urls);
     }
 
-    public static void addTransformer(String name, Transformer transformer) {
+    public static void transform(String name, Transformer transformer) {
         transformers.add(Map.entry(name, transformer));
     }
 

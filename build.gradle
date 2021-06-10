@@ -2,7 +2,7 @@ plugins {
     id("maven-publish")
 }
 
-Project plugin = gradle.includedBuild("plugin").gradle.rootProject
+Project plugin = gradle.includedBuild("wheel").gradle.rootProject
 
 plugin.tasks.all {Task task ->
     if (task.group == "publishing") {

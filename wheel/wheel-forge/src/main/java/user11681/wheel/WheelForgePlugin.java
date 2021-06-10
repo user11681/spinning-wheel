@@ -22,9 +22,12 @@ import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.gradle.plugins.MixinExtension;
 import org.spongepowered.asm.gradle.plugins.MixinGradlePlugin;
 import org.w3c.dom.Node;
+import user11681.reflect.Accessor;
+import user11681.reflect.Classes;
 import user11681.uncheck.Uncheck;
 import user11681.wheel.extension.WheelForgeExtension;
 import user11681.wheel.loader.TransformingClassLoader;
+import user11681.wheel.util.GroovyUtil;
 
 @SuppressWarnings("unused")
 public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
@@ -55,6 +58,8 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
     @Override
     public void apply(Project project) {
         super.apply(project, "net.minecraftforge.gradle", WheelForgeExtension.class);
+
+        this.project.defaultTasks("genIntellijRuns");
     }
 
     @Override
@@ -100,13 +105,11 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
 
     @Override
     protected void transform() {
-        TransformingClassLoader.addTransformer("net.minecraftforge.gradle.common.util.MojangLicenseHelper", type -> {
-            withMethod("displayWarning", type, method -> {
-                method.instructions.clear();
-                method.instructions.add(new InsnNode(Opcodes.RETURN));
-            });
-        });
-        TransformingClassLoader.addTransformer("net.minecraftforge.gradle.common.util.Utils", type -> {
+        TransformingClassLoader.transform("net.minecraftforge.gradle.common.util.MojangLicenseHelper", type -> withMethod("displayWarning", type, method -> {
+            method.instructions.clear();
+            method.instructions.add(new InsnNode(Opcodes.RETURN));
+        }));
+        TransformingClassLoader.transform("net.minecraftforge.gradle.common.util.Utils", type -> {
             String lambdaName = "lambda$createRunConfigTasks$13";
             Type projectType = Type.getType(Project.class);
 
@@ -155,7 +158,7 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
     protected void configurePublication(MavenPublication publication) {
         super.configurePublication(publication);
 
-        publication.artifact(this.artifacts.add("default", "%s/libs/%s-%s-obf.jar".formatted(this.project.getBuildDir(), this.project.getName(), this.project.getVersion()), artifact -> {
+        publication.artifact(this.artifacts.add("default", "%s/libs/%s-%s-obf.jar".formatted(this.project.getBuildDir(), this.name(), this.project.getVersion()), artifact -> {
             artifact.setType("jar");
             artifact.builtBy("reobfJar");
         }));
@@ -164,8 +167,6 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
     @Override
     protected void afterMain() {
         this.generateRunConfigurations();
-
-        this.enqueue(GEN_INTELLIJ_RUNS);
     }
 
     @Override
@@ -177,7 +178,10 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
 
         this.dependencyExtension = this.extensions.getByType(DependencyManagementExtension.class);
         this.userdevExtension = this.extensions.getByType(UserDevExtension.class);
-        this.extensions.getByType(MixinExtension.class).add(this.sourceSet("main"), this.project.getName() + ".refmap.json");
+
+        Accessor.putObject(GroovyUtil.site(Classes.load("org.spongepowered.asm.gradle.plugins.MixinExtension$_init_closure1"), 10), "name", "implementation");
+
+        this.extensions.getByType(MixinExtension.class).add(this.sourceSet("main"), this.name() + ".refmap.json");
     }
 
     @Override
@@ -211,10 +215,10 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
     private void generateRunConfigurations() {
         Stream.of("client", "server").forEach(side -> this.userdevExtension.getRuns().register(side, configuration -> {
             configuration.workingDirectory(this.file("run"));
-            configuration.arg("-mixin.config=%s.mixins.json".formatted(this.project.getName()));
+            configuration.arg("-mixin.config=%s.mixins.json".formatted(this.name()));
             configuration.property("forge.logging.console.level", "debug");
 
-            configuration.getMods().register(this.project.getName(), mod -> mod.source(this.sourceSet("main")));
+            configuration.getMods().register(this.name(), mod -> mod.source(this.sourceSet("main")));
         }));
     }
 }

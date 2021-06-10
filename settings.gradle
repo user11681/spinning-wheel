@@ -7,7 +7,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = "testbuild"
+rootProject.name = "root"
 
-includeBuild("plugin")
+includeBuild("wheel")
 includeBuild("test")

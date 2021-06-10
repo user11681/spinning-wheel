@@ -116,7 +116,7 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
         task.getActions().forEach(action -> action.execute(task));
     }
 
-    protected void apply(Project project, String plugin, Class<E> extensionClass) {
+    protected final void apply(Project project, String plugin, Class<E> extensionClass) {
         this.transform();
 
         if (project.getPlugins().hasPlugin(plugin)) {
@@ -294,6 +294,10 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
 
     protected File file(Object path) {
         return this.project.file(path);
+    }
+
+    protected String name() {
+        return this.project.getName();
     }
 
     static {
