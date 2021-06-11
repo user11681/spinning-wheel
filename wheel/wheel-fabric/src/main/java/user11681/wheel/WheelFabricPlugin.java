@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.fabricmc.loom.LoomGradleExtension;
 import net.fabricmc.loom.configuration.ide.RunConfigSettings;
@@ -34,10 +33,7 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricPlugin, WheelFabri
     private NamedDomainObjectContainer<RunConfigSettings> runConfigs;
 
     private static String meta(String endpoint, @Language("RegExp") String pattern) {
-        Matcher matcher = Pattern.compile(pattern).matcher(get("https://meta.fabricmc.net/v2/versions/" + endpoint));
-        matcher.find();
-
-        return matcher.group();
+        return Pattern.compile(pattern).matcher(get("https://meta.fabricmc.net/v2/versions/" + endpoint)).results().findFirst().orElseThrow().group();
     }
 
     @Override
