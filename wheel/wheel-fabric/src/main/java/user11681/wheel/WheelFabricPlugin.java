@@ -160,7 +160,7 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricPlugin, WheelFabri
 
     private void setRunDirectory() {
         if (this.isRoot() && this.extension.run.enabled) {
-            this.runConfigs.stream().map(RunConfigSettings::getRunDir).distinct().map(this.rootProject::file).map(File::toPath).forEach((ThrowingConsumer<Path>) (Path oldPath) -> {
+            this.runConfigs.stream().map(RunConfigSettings::getRunDir).distinct().map(this.rootProject::file).map(File::toPath).forEach((ThrowingConsumer<Path>) oldPath -> {
                 String customPath = this.extension.run.path;
                 Path runPath = customPath == null ? this.loom.getUserCache().toPath().resolve("run") : Path.of(customPath);
 

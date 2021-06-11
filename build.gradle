@@ -1,20 +1,4 @@
-plugins {
-    id("maven-publish")
-}
-
-Project plugin = gradle.includedBuild("wheel").gradle.rootProject
-
-plugin.tasks.all {Task task ->
-    if (task.group == "publishing") {
-        tasks.findByName(task.name).with {
-            if (it) {
-                it.enabled = false
-            } else {
-                it = tasks.create(task.name)
-                it.group = "publishing"
-            }
-
-            it.dependsOn(task)
-        }
-    }
+task publish(type: Exec) {
+    workingDir(file("wheel"))
+    commandLine(file("gradlew"), "publish")
 }
