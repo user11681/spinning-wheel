@@ -11,25 +11,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.fabricmc.loom.LoomGradleExtension;
 import net.fabricmc.loom.configuration.ide.RunConfigSettings;
-import net.fabricmc.loom.task.GenerateSourcesTask;
 import net.fabricmc.loom.task.RemapJarTask;
 import net.fabricmc.loom.task.RunGameTask;
 import net.fabricmc.loom.util.Constants;
-import org.gradle.api.JavaVersion;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.SourceSet;
 import org.intellij.lang.annotations.Language;
 import user11681.reflect.Accessor;
+import user11681.reflect.Classes;
 import user11681.reflect.Invoker;
 import user11681.uncheck.ThrowingConsumer;
 import user11681.wheel.extension.Channel;
 import user11681.wheel.extension.WheelFabricExtension;
 import user11681.wheel.util.FilteredPrintStream;
 
-@SuppressWarnings("unused")
-public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
+public class WheelFabricPlugin extends WheelPlugin<WheelFabricPlugin, WheelFabricExtension> {
     private static final Map<String, String> latestYarnBuilds = new HashMap<>();
 
     private LoomGradleExtension loom;
@@ -140,11 +138,7 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
 
     @Override
     protected String compatibilityVersion(Object version) {
-        if (version == null) {
-            return this.extension.channel == Channel.RELEASE ? "8" : "16";
-        }
-
-        return (version.equals("latest") ? JavaVersion.current() : version).toString();
+        return version == null ? "16" : super.compatibilityVersion(version);
     }
 
     private RunGameTask runTask(RunConfigSettings configuration) {
@@ -154,15 +148,14 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
     }
 
     private void generateSources() throws Throwable {
-        if (this.extension.genSources != null) {
-            GenerateSourcesTask genSources = this.task(this.extension.genSources);
-
-            if (!((File) Invoker.bind(genSources, "getMappedJarFileWithSuffix", File.class, String.class).invoke("-sources.jar")).exists()) {
-                this.logger.lifecycle("Sources not found; running {}.", genSources.getName());
-
-                this.enqueue(genSources);
-            }
+        if (this.extension.genSources != null && !this.sourcePath().exists()) {
+            this.logger.lifecycle("Sources not found; executing {}.", this.extension.genSources);
+            this.execute(this.extension.genSources);
         }
+    }
+
+    private File sourcePath() throws Throwable {
+        return (File) Invoker.bind(this.task(this.extension.genSources), "getMappedJarFileWithSuffix", File.class, String.class).invoke("-sources.jar");
     }
 
     private void setRunDirectory() {
@@ -213,6 +206,6 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricExtension> {
     }
 
     static {
-        Accessor.putObject(System.class, "out", new FilteredPrintStream(System.out));
+        Classes.reinterpret(Accessor.get(System.class, "out"), Classes.klass(FilteredPrintStream.class));
     }
 }

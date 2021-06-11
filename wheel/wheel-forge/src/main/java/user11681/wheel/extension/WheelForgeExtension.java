@@ -1,5 +1,11 @@
 package user11681.wheel.extension;
 
-public class WheelForgeExtension extends WheelExtension {
+import user11681.wheel.WheelForgePlugin;
+
+public class WheelForgeExtension extends WheelExtension<WheelForgeExtension, WheelForgePlugin> {
     public String forge;
+
+    public WheelForgeExtension(WheelForgePlugin plugin) {
+        super(plugin);
+    }
 }

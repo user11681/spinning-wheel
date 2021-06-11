@@ -2,13 +2,15 @@ package user11681.wheel.extension;
 
 import groovy.lang.Closure;
 import org.gradle.util.ConfigureUtil;
+import user11681.wheel.WheelPlugin;
 import user11681.wheel.dependency.RepositoryContainer;
 import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.publish.PublishingConfig;
 
-public abstract class WheelExtension {
+public abstract class WheelExtension<T extends WheelExtension<T, P>, P extends WheelPlugin<P, T>> {
+    public final P plugin;
+
     public boolean clean = true;
-    public String genSources = "genSources";
     public String minecraft;
     public Compatibility java = new Compatibility();
     public PublishingConfig publish = new PublishingConfig();
@@ -93,6 +95,10 @@ public abstract class WheelExtension {
             .dependency("mod-menu", "com.terraformersmc:modmenu", "1.16+");
         dependencies.repository("wrenchable", "https://dl.bintray.com/zundrel/wrenchable");
     });
+
+    public WheelExtension(P plugin) {
+        this.plugin = plugin;
+    }
 
     public static String repository(String key) {
         return repositories.repository(key);

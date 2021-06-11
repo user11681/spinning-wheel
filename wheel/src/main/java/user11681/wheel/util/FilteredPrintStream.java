@@ -1,11 +1,13 @@
 package user11681.wheel.util;
 
 import java.io.PrintStream;
+import org.gradle.internal.io.LinePerThreadBufferingOutputStream;
+import org.gradle.internal.io.TextStream;
 import org.jetbrains.annotations.NotNull;
 
-public class FilteredPrintStream extends PrintStream {
-    public FilteredPrintStream(PrintStream parent) {
-        super(parent);
+public class FilteredPrintStream extends LinePerThreadBufferingOutputStream {
+    private FilteredPrintStream(TextStream handler) {
+        super(handler);
     }
 
     @Override

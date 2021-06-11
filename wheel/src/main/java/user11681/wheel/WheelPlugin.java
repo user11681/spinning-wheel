@@ -8,6 +8,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -39,6 +45,8 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.language.jvm.tasks.ProcessResources;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 import user11681.reflect.Accessor;
 import user11681.reflect.Classes;
 import user11681.uncheck.Uncheck;
@@ -50,13 +58,16 @@ import user11681.wheel.loader.TransformingClassLoader;
 import user11681.wheel.repository.WheelRepositoryFactory;
 import user11681.wheel.util.ThrowingAction;
 
-@SuppressWarnings({"ResultOfMethodCallIgnored", "UnstableApiUsage"})
-public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Project> {
+public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelExtension<E, P>> implements Plugin<Project> {
+    public static final TransformingClassLoader loader = Classes.reinterpret(WheelPlugin.class.getClassLoader(), TransformingClassLoader.klass);
+
     public final String MOD = "mod";
 
     public static Project currentProject;
 
     protected static String latestMinecraftVersion;
+
+    private static final Set<Class<?>> transformed = new HashSet<>();
 
     private static HttpClient httpClient;
 
@@ -103,21 +114,70 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
         Files.move(path, moveOldPath);
     }
 
-    protected void enqueue(Task task) {
-        this.finished(() -> execute(task));
+    protected static void withMethod(String name, ClassNode type, Consumer<MethodNode> action) {
+        type.methods.stream().filter(method -> method.name.equals(name)).forEach(action);
     }
 
-    protected void enqueue(String task) {
-        this.finished(() -> execute(this.task(task)));
+    protected void execute(String task) {
+        this.execute(this.task(task));
     }
 
-    private static void execute(Task task) {
-        task.getTaskDependencies().getDependencies(task).forEach(WheelPlugin::execute);
+    protected void execute(Task task) {
+        task.getTaskDependencies().getDependencies(task).forEach(this::execute);
         task.getActions().forEach(action -> action.execute(task));
     }
 
+    public <T extends Task> T task(Class<T> type) {
+        TaskCollection<T> tasks = this.tasks.withType(type);
+        assert tasks.size() == 1;
+
+        return tasks.iterator().next();
+    }
+
+    public <T extends Task> T task(String name) {
+        return (T) this.tasks.getByName(name);
+    }
+
+    public SourceSet sourceSet(String name) {
+        return this.sourceSets.getByName(name);
+    }
+
+    public Configuration configuration(String name) {
+        return this.configurations.getByName(name);
+    }
+
+    protected void finished(Runnable action) {
+        this.gradle.buildFinished(result -> action.run());
+    }
+
+    public File file(Object path) {
+        return this.project.file(path);
+    }
+
+    public String name() {
+        return this.project.getName();
+    }
+
+    public List<String> defaultTasks() {
+        return this.project.getDefaultTasks();
+    }
+
+    public void defaultTask(String... tasks) {
+        Collections.addAll(this.defaultTasks(), tasks);
+    }
+
+    protected void enqueue(String task) {
+        this.gradle.getTaskGraph().whenReady(graph -> this.execute(task));
+    }
+
+    protected void enqueue(Task task) {
+        this.gradle.getTaskGraph().whenReady(graph -> this.execute(task));
+    }
+
     protected final void apply(Project project, String plugin, Class<E> extensionClass) {
-        this.transform();
+        if (transformed.add(this.getClass())) {
+            this.transform();
+        }
 
         if (project.getPlugins().hasPlugin(plugin)) {
             throw new IllegalStateException("%s must be either specified before wheel without being applied or not specified at all.".formatted(plugin));
@@ -140,7 +200,7 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
         this.gradle = project.getGradle();
         this.buildScript = project.getBuildscript();
         this.logging = project.getLogging();
-        this.extension = this.extensions.create("wheel", extensionClass);
+        this.extension = this.extensions.create("wheel", extensionClass, this);
 
         project.afterEvaluate((ThrowingAction<Project>) ignored -> this.afterEvaluate());
 
@@ -258,49 +318,18 @@ public abstract class WheelPlugin<E extends WheelExtension> implements Plugin<Pr
     }
 
     protected String compatibilityVersion(Object version) {
-        return "8";
+        if (version == null) {
+            return "8";
+        }
+
+        return (version.equals("latest") ? JavaVersion.current() : version).toString();
     }
 
-    protected boolean isRoot() {
+    public boolean isRoot() {
         return this.project == this.rootProject;
     }
 
-    protected <T extends Task> TaskCollection<T> tasks(Class<T> type) {
+    public <T extends Task> TaskCollection<T> tasks(Class<T> type) {
         return this.tasks.withType(type);
-    }
-
-    protected <T extends Task> T task(Class<T> type) {
-        TaskCollection<T> tasks = this.tasks.withType(type);
-        assert tasks.size() == 1;
-
-        return tasks.iterator().next();
-    }
-
-    protected <T extends Task> T task(String name) {
-        return (T) this.tasks.getByName(name);
-    }
-
-    protected SourceSet sourceSet(String name) {
-        return this.sourceSets.getByName(name);
-    }
-
-    protected Configuration configuration(String name) {
-        return this.configurations.getByName(name);
-    }
-
-    protected void finished(Runnable action) {
-        this.gradle.buildFinished(result -> action.run());
-    }
-
-    protected File file(Object path) {
-        return this.project.file(path);
-    }
-
-    protected String name() {
-        return this.project.getName();
-    }
-
-    static {
-        Classes.reinterpret(WheelPlugin.class.getClassLoader(), TransformingClassLoader.klass);
     }
 }

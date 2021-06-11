@@ -3,7 +3,6 @@ package user11681.wheel;
 import com.github.jengelman.gradle.plugins.shadow.ShadowBasePlugin;
 import com.github.jengelman.gradle.plugins.shadow.ShadowPlugin;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilderFactory;
 import net.minecraftforge.gradle.userdev.DependencyManagementExtension;
@@ -14,11 +13,9 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.gradle.plugins.MixinExtension;
 import org.spongepowered.asm.gradle.plugins.MixinGradlePlugin;
 import org.w3c.dom.Node;
@@ -26,11 +23,10 @@ import user11681.reflect.Accessor;
 import user11681.reflect.Classes;
 import user11681.uncheck.Uncheck;
 import user11681.wheel.extension.WheelForgeExtension;
-import user11681.wheel.loader.TransformingClassLoader;
 import user11681.wheel.util.GroovyUtil;
 
 @SuppressWarnings("unused")
-public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
+public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeExtension> {
     private static final String FORGE_URL = "https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml";
     private static final String GEN_INTELLIJ_RUNS = "genIntellijRuns";
 
@@ -51,15 +47,11 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
         return Stream.iterate(first, Objects::nonNull, Node::getNextSibling).map(Node::getTextContent);
     }
 
-    private static void withMethod(String name, ClassNode type, Consumer<MethodNode> action) {
-        type.methods.stream().filter(method -> method.name.equals(name)).forEach(action);
-    }
-
     @Override
     public void apply(Project project) {
         super.apply(project, "net.minecraftforge.gradle", WheelForgeExtension.class);
 
-        this.project.defaultTasks("genIntellijRuns");
+        this.execute("genIntellijRuns");
     }
 
     @Override
@@ -105,11 +97,11 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
 
     @Override
     protected void transform() {
-        TransformingClassLoader.transform("net.minecraftforge.gradle.common.util.MojangLicenseHelper", type -> withMethod("displayWarning", type, method -> {
+        loader.transform("net.minecraftforge.gradle.common.util.MojangLicenseHelper", type -> withMethod("displayWarning", type, method -> {
             method.instructions.clear();
             method.instructions.add(new InsnNode(Opcodes.RETURN));
         }));
-        TransformingClassLoader.transform("net.minecraftforge.gradle.common.util.Utils", type -> {
+        loader.transform("net.minecraftforge.gradle.common.util.Utils", type -> {
             String lambdaName = "lambda$createRunConfigTasks$13";
             Type projectType = Type.getType(Project.class);
 
@@ -210,6 +202,15 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgeExtension> {
         super.checkVersions();
 
         this.logger.lifecycle("Forge version: {}", this.extension.forge);
+    }
+
+    @Override
+    protected String compatibilityVersion(Object version) {
+        if (version == null) {
+            return Integer.parseInt(this.extension.minecraft.split("\\.", 2)[1]) >= 17 ? "16" : "8";
+        }
+
+        return super.compatibilityVersion(version);
     }
 
     private void generateRunConfigurations() {

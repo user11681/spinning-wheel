@@ -1,5 +1,5 @@
 plugins {
-    id("wheel-forge").version("+")
+    id("wheel-forge").version("latest.integration")
 }
 
 group = "test"

@@ -15,7 +15,7 @@ public class GroovyUtil {
         return sites(type).get(index);
     }
 
-    public static Object getProperty(List<CallSite> sites, Object object, int... indexes) {
+    public static Object property(List<CallSite> sites, Object object, int... indexes) {
         for (int index : indexes) {
             Object javaBad = object;
             object = Uncheck.handle(() -> sites.get(index).callGetProperty(javaBad));
