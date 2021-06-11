@@ -10,7 +10,11 @@ if (!plugins.hasPlugin("wheel-forge")) {
 }
 
 wheel {
-    publish = false
+    publish {
+        external {
+            repository = null
+        }
+    }
 }
 
 dependencies {

@@ -2,6 +2,7 @@ package user11681.wheel;
 
 import com.github.jengelman.gradle.plugins.shadow.ShadowBasePlugin;
 import com.github.jengelman.gradle.plugins.shadow.ShadowPlugin;
+import java.io.File;
 import java.util.Objects;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -148,7 +149,7 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
     protected void configurePublication(MavenPublication publication) {
         super.configurePublication(publication);
 
-        publication.artifact(this.artifacts.add("default", "%s/libs/%s-%s-obf.jar".formatted(this.project.getBuildDir(), this.name(), this.project.getVersion()), artifact -> {
+        publication.artifact(this.artifacts.add("default", new File("%s/libs/%s-%s-obf.jar".formatted(this.project.getBuildDir(), this.name(), this.project.getVersion())), artifact -> {
             artifact.setType("jar");
             artifact.builtBy("reobfJar");
         }));

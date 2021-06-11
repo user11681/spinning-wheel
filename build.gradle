@@ -1,4 +1,6 @@
-task publish(type: Exec) {
-    workingDir(file("wheel"))
-    commandLine(file("gradlew"), "publish")
+["publish", "publishToMavenLocal"].forEach {String name ->
+    tasks.register(name, Exec) {Exec task ->
+        task.workingDir(file("wheel"))
+        task.commandLine(file("gradlew"), name)
+    }
 }
