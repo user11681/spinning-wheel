@@ -51,7 +51,7 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
     public void apply(Project project) {
         super.apply(project, "net.minecraftforge.gradle", WheelForgeExtension.class);
 
-        this.execute("genIntellijRuns");
+        this.defaultTask("genIntellijRuns");
     }
 
     @Override
@@ -126,17 +126,15 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
                                 instruction = instruction.getPrevious();
                             }
                         }
-                    } else {
-                        if (instruction instanceof InvokeDynamicInsnNode lambda) {
-                            Handle handle = (Handle) lambda.bsmArgs[1];
+                    } else if (instruction instanceof InvokeDynamicInsnNode lambda) {
+                        Handle handle = (Handle) lambda.bsmArgs[1];
 
-                            if (handle.getName().equals(lambdaName)) {
-                                Type[] argumentTypes = Type.getArgumentTypes(handle.getDesc());
-                                argumentTypes[argumentTypes.length - 1] = projectType;
+                        if (handle.getName().equals(lambdaName)) {
+                            Type[] argumentTypes = Type.getArgumentTypes(handle.getDesc());
+                            argumentTypes[argumentTypes.length - 1] = projectType;
 
-                                lambda.bsmArgs[1] = new Handle(handle.getTag(), handle.getOwner(), handle.getName(), Type.getMethodDescriptor(Type.getType(void.class), argumentTypes), false);
-                                lambda.bsmArgs[2] = Type.getMethodType(Type.getType(void.class), projectType);
-                            }
+                            lambda.bsmArgs[1] = new Handle(handle.getTag(), handle.getOwner(), handle.getName(), Type.getMethodDescriptor(Type.getType(void.class), argumentTypes), false);
+                            lambda.bsmArgs[2] = Type.getMethodType(Type.getType(void.class), projectType);
                         }
                     }
 

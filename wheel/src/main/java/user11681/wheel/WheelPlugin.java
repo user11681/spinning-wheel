@@ -58,6 +58,7 @@ import user11681.wheel.loader.TransformingClassLoader;
 import user11681.wheel.repository.WheelRepositoryFactory;
 import user11681.wheel.util.ThrowingAction;
 
+@SuppressWarnings({"SameParameterValue", "unused"})
 public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelExtension<E, P>> implements Plugin<Project> {
     public static final TransformingClassLoader loader = Classes.reinterpret(WheelPlugin.class.getClassLoader(), TransformingClassLoader.klass);
 
@@ -217,7 +218,7 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
 
     protected void configurePublication(MavenPublication publication) {
         publication.setGroupId(String.valueOf(this.project.getGroup()));
-        publication.setArtifactId(this.project.getName());
+        publication.setArtifactId(this.name());
         publication.setVersion(String.valueOf(this.project.getVersion()));
     }
 
