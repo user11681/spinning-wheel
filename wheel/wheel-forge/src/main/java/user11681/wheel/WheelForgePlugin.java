@@ -156,11 +156,6 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
     }
 
     @Override
-    protected void afterMain() {
-        this.generateRunConfigurations();
-    }
-
-    @Override
     protected void applyPlugins() {
         super.applyPlugins();
 
@@ -170,6 +165,8 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
         this.dependencyExtension = this.extensions.getByType(DependencyManagementExtension.class);
         this.userdevExtension = this.extensions.getByType(UserDevExtension.class);
         this.extensions.getByType(MixinExtension.class).add(this.sourceSet("main"), this.name() + ".refmap.json");
+
+        this.generateRunConfigurations();
 
         Accessor.putObject(GroovyUtil.site(Classes.load("org.spongepowered.asm.gradle.plugins.MixinExtension$_init_closure1"), 10), "name", "implementation");
     }
@@ -218,11 +215,11 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
         Stream.of("client", "server").forEach(side -> this.userdevExtension.getRuns().register(side, configuration -> {
             configuration.workingDirectory(this.file("run"));
 
-            configuration.environment("target", side);
+            // configuration.environment("target", side);
             configuration.property("forge.logging.console.level", "debug");
             configuration.property("mixin.env.remapRefMap", "true");
             configuration.property("mixin.env.refMapRemappingFile", "%s/createSrgToMcp/output.srg".formatted(this.project.getBuildDir()));
-            configuration.main("net.minecraftforge.userdev.LaunchTesting");
+            // configuration.main("net.minecraftforge.userdev.LaunchTesting");
             configuration.arg("-mixin.config=%s.mixins.json".formatted(this.name()));
 
             configuration.getMods().register(this.name(), mod -> mod.source(this.sourceSet("main")));
