@@ -169,10 +169,9 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
 
         this.dependencyExtension = this.extensions.getByType(DependencyManagementExtension.class);
         this.userdevExtension = this.extensions.getByType(UserDevExtension.class);
+        this.extensions.getByType(MixinExtension.class).add(this.sourceSet("main"), this.name() + ".refmap.json");
 
         Accessor.putObject(GroovyUtil.site(Classes.load("org.spongepowered.asm.gradle.plugins.MixinExtension$_init_closure1"), 10), "name", "implementation");
-
-        this.extensions.getByType(MixinExtension.class).add(this.sourceSet("main"), this.name() + ".refmap.json");
     }
 
     @Override
@@ -180,8 +179,11 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
         super.addDependencies();
 
         this.dependencies.add("minecraft", "net.minecraftforge:forge:%s-%s".formatted(this.extension.minecraft, this.extension.forge));
-        this.dependencies.add("implementation", "org.spongepowered:mixin:+");
-        this.dependencies.add("annotationProcessor", "org.spongepowered:mixin:+:processor");
+        this.dependencies.add("implementation", "org.spongepowered:mixin:latest.integration");
+
+        if (!Boolean.getBoolean("idea.sync.active")) {
+            this.dependencies.add("annotationProcessor", "org.spongepowered:mixin:latest.integration:processor");
+        }
 
         this.configuration(MOD).getDependencies().forEach(this.dependencyExtension::deobf);
         this.configuration(ShadowBasePlugin.getCONFIGURATION_NAME()).getDependencies().forEach(dependency -> {
