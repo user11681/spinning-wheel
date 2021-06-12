@@ -217,8 +217,12 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
     private void generateRunConfigurations() {
         Stream.of("client", "server").forEach(side -> this.userdevExtension.getRuns().register(side, configuration -> {
             configuration.workingDirectory(this.file("run"));
-            configuration.arg("-mixin.config=%s.mixins.json".formatted(this.name()));
+
+            configuration.environment("target", side);
             configuration.property("forge.logging.console.level", "debug");
+            configuration.property("mixin.env.remapRefMap", "true");
+            configuration.property("mixin.env.refMapRemappingFile", "%s/createSrgToMcp/output.srg".formatted(this.project.getBuildDir()));
+            configuration.arg("-mixin.config=%s.mixins.json".formatted(this.name()));
 
             configuration.getMods().register(this.name(), mod -> mod.source(this.sourceSet("main")));
         }));
