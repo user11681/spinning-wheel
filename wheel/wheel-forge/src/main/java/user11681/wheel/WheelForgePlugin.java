@@ -223,6 +223,6 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
             configuration.arg("-mixin.config=%s.mixins.json".formatted(this.name()));
 
             configuration.getMods().register(this.name(), mod -> mod.source(this.sourceSet("main")));
-        }));
+        }).get());
     }
 }

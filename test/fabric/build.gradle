@@ -1,3 +1,9 @@
+buildscript {
+    repositories {
+        maven {url = "https://maven.fabricmc.net"}
+    }
+}
+
 plugins {
     id("wheel-fabric").version("latest.integration")
 }
