@@ -62,16 +62,15 @@ import user11681.wheel.util.ThrowingAction;
 public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelExtension<E, P>> implements Plugin<Project> {
     public static final TransformingClassLoader loader = Classes.reinterpret(WheelPlugin.class.getClassLoader(), TransformingClassLoader.klass);
 
+    private static final Set<Class<?>> transformed = new HashSet<>();
+
+    private static HttpClient httpClient;
+
     public final String MOD = "mod";
 
     public static Project currentProject;
 
     protected static String latestMinecraftVersion;
-
-    private static final Set<Class<?>> transformed = new HashSet<>();
-
-    private static HttpClient httpClient;
-
     protected Project project;
     protected Project rootProject;
     protected PluginContainer plugins;
@@ -119,15 +118,6 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
         type.methods.stream().filter(method -> method.name.equals(name)).forEach(action);
     }
 
-    protected void execute(String task) {
-        this.execute(this.task(task));
-    }
-
-    protected void execute(Task task) {
-        task.getTaskDependencies().getDependencies(task).forEach(this::execute);
-        task.getActions().forEach(action -> action.execute(task));
-    }
-
     public <T extends Task> T task(Class<T> type) {
         TaskCollection<T> tasks = this.tasks.withType(type);
         assert tasks.size() == 1;
@@ -147,10 +137,6 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
         return this.configurations.getByName(name);
     }
 
-    protected void finished(Runnable action) {
-        this.gradle.buildFinished(result -> action.run());
-    }
-
     public File file(Object path) {
         return this.project.file(path);
     }
@@ -165,6 +151,27 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
 
     public void defaultTask(String... tasks) {
         Collections.addAll(this.defaultTasks(), tasks);
+    }
+
+    public boolean isRoot() {
+        return this.project == this.rootProject;
+    }
+
+    public <T extends Task> TaskCollection<T> tasks(Class<T> type) {
+        return this.tasks.withType(type);
+    }
+
+    protected void execute(String task) {
+        this.execute(this.task(task));
+    }
+
+    protected void execute(Task task) {
+        task.getTaskDependencies().getDependencies(task).forEach(this::execute);
+        task.getActions().forEach(action -> action.execute(task));
+    }
+
+    protected void finished(Runnable action) {
+        this.gradle.buildFinished(result -> action.run());
     }
 
     protected void enqueue(String task) {
@@ -328,13 +335,5 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
         }
 
         return (version.equals("latest") ? JavaVersion.current() : version).toString();
-    }
-
-    public boolean isRoot() {
-        return this.project == this.rootProject;
-    }
-
-    public <T extends Task> TaskCollection<T> tasks(Class<T> type) {
-        return this.tasks.withType(type);
     }
 }

@@ -87,7 +87,7 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
 
         if (this.extension.forge == null) {
             this.extension.forge = nodeStream((versioning == null ? versioning() : versioning).getLastChild().getFirstChild())
-                .filter(version -> version.startsWith(this.extension.minecraft))
+                .filter(version -> version.startsWith(this.extension.minecraft) && (!version.startsWith("36") || version.endsWith("31")))
                 .findFirst()
                 .map(version -> version.substring(version.indexOf('-') + 1))
                 .orElseThrow(() -> new IllegalArgumentException("Minecraft version \"%s\" was not found at %s.".formatted(this.extension.minecraft, FORGE_URL)));
