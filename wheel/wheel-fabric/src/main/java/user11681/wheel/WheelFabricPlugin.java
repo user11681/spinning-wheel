@@ -133,8 +133,8 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricPlugin, WheelFabri
     }
 
     @Override
-    protected String compatibilityVersion(Object version) {
-        return version == null ? "16" : super.compatibilityVersion(version);
+    protected String defaultJavaVersion() {
+        return "16";
     }
 
     private RunGameTask runTask(RunConfigSettings configuration) {

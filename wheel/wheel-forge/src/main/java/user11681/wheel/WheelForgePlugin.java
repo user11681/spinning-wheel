@@ -203,12 +203,8 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
     }
 
     @Override
-    protected String compatibilityVersion(Object version) {
-        if (version == null) {
-            return Integer.parseInt(this.extension.minecraft.split("\\.", 2)[1]) >= 17 ? "16" : "8";
-        }
-
-        return super.compatibilityVersion(version);
+    protected String defaultJavaVersion() {
+        return Integer.parseInt(this.extension.minecraft.split("\\.", 2)[1]) >= 17 ? "16" : "8";
     }
 
     private void generateRunConfigurations() {

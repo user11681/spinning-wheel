@@ -318,9 +318,13 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
         this.logger.lifecycle("Minecraft version: {}", this.extension.minecraft);
     }
 
-    protected String compatibilityVersion(Object version) {
+    protected String defaultJavaVersion() {
+        return "8";
+    }
+
+    private String compatibilityVersion(Object version) {
         if (version == null) {
-            return "8";
+            return this.defaultJavaVersion();
         }
 
         return (version.equals("latest") ? JavaVersion.current() : version).toString();

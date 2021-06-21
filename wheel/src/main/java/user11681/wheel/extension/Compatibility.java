@@ -1,8 +1,8 @@
 package user11681.wheel.extension;
 
 public class Compatibility {
-    public Object source = 8;
-    public Object target = 8;
+    public Object source;
+    public Object target;
 
     public void setSource(Object source) {
         this.source = source;
