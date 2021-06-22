@@ -26,6 +26,7 @@ public abstract class WheelExtension<T extends WheelExtension<T, P>, P extends W
             .dependency("huntingham-hills", "user11681:huntingham-hills")
             .dependency("invisible-living-entities", "user11681:invisiblelivingentities")
             .dependency("javac-plugin", "user11681:javac-plugin")
+            .dependency("liberica", "user11681:liberica")
             .dependency("limitless", "user11681:limitless")
             .dependency("narrator-off", "user11681:narrator-off")
             .dependency("noauth", "user11681:noauth")
