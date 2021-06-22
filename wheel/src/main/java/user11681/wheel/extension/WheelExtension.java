@@ -92,7 +92,7 @@ public abstract class WheelExtension<T extends WheelExtension<T, P>, P extends W
             .dependency("cloth-config", "me.shedaniel.cloth:config-2")
             .dependency("rei", "me.shedaniel:RoughlyEnoughItems");
         dependencies.repository("terraformers", "https://maven.terraformersmc.com")
-            .dependency("mod-menu", "com.terraformersmc:modmenu", "1.16+");
+            .dependency("mod-menu", "com.terraformersmc:modmenu");
         dependencies.repository("wrenchable", "https://dl.bintray.com/zundrel/wrenchable");
     });
 

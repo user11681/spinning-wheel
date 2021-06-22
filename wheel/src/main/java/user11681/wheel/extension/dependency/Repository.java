@@ -15,7 +15,7 @@ public class Repository {
     }
 
     public Repository dependency(String key, String module) {
-        this.dependencies.add(new Dependency(key, module + ":latest.release", this.key));
+        this.dependencies.add(new Dependency(key, module + ":latest.integration", this.key));
 
         return this;
     }
@@ -45,8 +45,8 @@ public class Repository {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return this == obj || obj instanceof Repository && this.key.equals(((Repository) obj).key);
+    public boolean equals(Object object) {
+        return this == object || object instanceof Repository repository && this.key.equals(repository.key);
     }
 
     @Override
