@@ -234,8 +234,8 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
 
         this.checkVersions();
 
-        this.<JavaCompile>task("compileJava").setSourceCompatibility(this.compatibilityVersion(this.extension.java.source));
-        this.<JavaCompile>task("compileJava").setTargetCompatibility(this.compatibilityVersion(this.extension.java.target));
+        this.<JavaCompile>task("compileJava").setSourceCompatibility(this.javaVersion(this.extension.java.source));
+        this.<JavaCompile>task("compileJava").setTargetCompatibility(this.javaVersion(this.extension.java.target));
 
         this.addDependencies();
 
@@ -329,7 +329,7 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
         return "8";
     }
 
-    private String compatibilityVersion(Object version) {
+    private String javaVersion(Object version) {
         if (version == null) {
             return this.defaultJavaVersion();
         }
