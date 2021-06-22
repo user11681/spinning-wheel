@@ -23,7 +23,7 @@ public abstract class WheelExtension<T extends WheelExtension<T, P>, P extends W
             .dependency("common-formatting", "user11681:common-formatting")
             .dependency("dynamic-entry", "user11681:dynamicentry")
             .dependency("gross-fabric-hacks", "net.devtech:grossfabrichacks")
-            .dependency("huntingham-hills", "user11681:fabricasmtools")
+            .dependency("huntingham-hills", "user11681:huntingham-hills")
             .dependency("invisible-living-entities", "user11681:invisiblelivingentities")
             .dependency("javac-plugin", "user11681:javac-plugin")
             .dependency("limitless", "user11681:limitless")
