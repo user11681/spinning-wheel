@@ -30,6 +30,7 @@ public abstract class WheelExtension<T extends WheelExtension<T, P>, P extends W
             .dependency("limitless", "user11681:limitless")
             .dependency("narrator-off", "user11681:narrator-off")
             .dependency("noauth", "user11681:noauth")
+            .dependency("numerus-romani", "user11681:numerus-romani")
             .dependency("optional", "user11681:optional")
             .dependency("phormat", "user11681:phormat")
             .dependency("project-fabrok", "user11681:projectfabrok")
