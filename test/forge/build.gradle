@@ -8,7 +8,7 @@ buildscript {
 }
 
 plugins {
-    id("wheel-forge").version("latest.integration")
+    id("wheel-forge")
 }
 
 group = "test"

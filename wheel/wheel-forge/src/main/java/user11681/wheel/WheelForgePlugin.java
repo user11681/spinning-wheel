@@ -87,10 +87,12 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
 
         if (this.extension.forge == null) {
             this.extension.forge = nodeStream((versioning == null ? versioning() : versioning).getLastChild().getFirstChild())
-                .filter(version -> version.startsWith(this.extension.minecraft) && (!version.startsWith("36") || version.endsWith("31")))
+                .filter(version -> version.startsWith(this.extension.minecraft))
                 .findFirst()
                 .map(version -> version.substring(version.indexOf('-') + 1))
                 .orElseThrow(() -> new IllegalArgumentException("Minecraft version \"%s\" was not found at %s.".formatted(this.extension.minecraft, FORGE_URL)));
+        } else if (this.extension.minecraft.equals("1.16.5")) {
+            this.extension.forge = "36.1.31";
         }
 
         this.userdevExtension.mappings("official", this.extension.minecraft);
@@ -204,7 +206,7 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
 
     @Override
     protected String defaultJavaVersion() {
-        return Integer.parseInt(this.extension.minecraft.split("\\.", 2)[1]) >= 17 ? "16" : "8";
+        return Integer.parseInt(this.extension.minecraft.split("\\.", 3)[1]) >= 17 ? "16" : "8";
     }
 
     private void generateRunConfigurations() {
