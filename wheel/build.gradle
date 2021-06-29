@@ -3,7 +3,7 @@ allprojects {
     plugins.apply("java-library")
 
     group = "user11681"
-    version = "0"
+    version = "0-SNAPSHOT"
 
     sourceCompatibility = 16
     targetCompatibility = 16
