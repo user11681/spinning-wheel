@@ -28,7 +28,7 @@ import user11681.wheel.util.FilteredPrintStream;
 
 public class WheelFabricPlugin extends WheelPlugin<WheelFabricPlugin, WheelFabricExtension> {
     private static final Map<String, String> latestYarnBuilds = new HashMap<>();
-
+    
     private LoomGradleExtension loom;
     private NamedDomainObjectContainer<RunConfigSettings> runConfigs;
 

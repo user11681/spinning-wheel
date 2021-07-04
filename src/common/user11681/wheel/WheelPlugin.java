@@ -59,17 +59,15 @@ import user11681.wheel.util.ThrowingAction;
 
 @SuppressWarnings({"SameParameterValue", "unused"})
 public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelExtension<E, P>> implements Plugin<Project> {
+    public static final String MOD = "mod";
     public static final TransformingClassLoader loader = Classes.reinterpret(WheelPlugin.class.getClassLoader(), TransformingClassLoader.klass);
-
-    private static final Set<Class<?>> transformed = new HashSet<>();
-
-    private static HttpClient httpClient;
-
-    public final String MOD = "mod";
-
     public static Project currentProject;
 
     protected static String latestMinecraftVersion;
+
+    private static final Set<Class<?>> transformed = new HashSet<>();
+    private static HttpClient httpClient;
+
     protected Project project;
     protected Project rootProject;
     protected PluginContainer plugins;
