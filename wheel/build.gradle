@@ -48,6 +48,13 @@ allprojects {
             }
         }
     }
+
+    sourceSets {
+        main {
+            resources.srcDirs.clear()
+            java.srcDirs = [rootProject.file("../src/${project == rootProject ? "common" : project.name}")]
+        }
+    }
 }
 
 subprojects {
@@ -60,8 +67,8 @@ subprojects {
     gradlePlugin {
         plugins {
             register(project.name) {
-                id = project.name
-                implementationClass = "user11681.wheel.Wheel${project.name.replace("wheel-", "").capitalize()}Plugin"
+                id = "wheel-${project.name}"
+                implementationClass = "user11681.wheel.Wheel${project.name.capitalize()}Plugin"
             }
         }
     }

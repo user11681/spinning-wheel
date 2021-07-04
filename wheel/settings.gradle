@@ -1,2 +1,2 @@
-include(":wheel-fabric")
-include(":wheel-forge")
+include(":fabric")
+include(":forge")

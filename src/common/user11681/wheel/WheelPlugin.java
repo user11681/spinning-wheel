@@ -31,7 +31,6 @@ import org.gradle.api.logging.LoggingManager;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.JavaLibraryPlugin;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.plugins.PluginManager;
@@ -88,7 +87,6 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
     protected LoggingManager logging;
     protected E extension;
     protected JavaPluginExtension java;
-    protected JavaPluginConvention javaConvention;
     protected SourceSetContainer sourceSets;
 
     protected abstract String metadataFile();
@@ -284,8 +282,7 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
 
         this.java = this.extensions.getByType(JavaPluginExtension.class);
         this.java.withSourcesJar();
-        this.javaConvention = this.convention.getPlugin(JavaPluginConvention.class);
-        this.sourceSets = this.javaConvention.getSourceSets();
+        this.sourceSets = this.java.getSourceSets();
     }
 
     protected void addRepositories() {

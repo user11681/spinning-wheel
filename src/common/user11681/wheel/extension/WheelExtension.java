@@ -83,7 +83,7 @@ public abstract class WheelExtension<T extends WheelExtension<T, P>, P extends W
             .dependency("astromine", "com.github.Chainmail-Studios:Astromine", "1.8.1")
             .dependency("fabric-asm", "com.github.Chocohead:Fabric-ASM", "master-SNAPSHOT")
             .dependency("lil-tater-reloaded", "com.github.Yoghurt4C:LilTaterReloaded", "fabric-1.16-SNAPSHOT");
-        dependencies.repository("ladysnake", "https://dl.bintray.com/ladysnake/libs")
+        dependencies.repository("ladysnake", "https://ladysnake.jfrog.io/artifactory/mods")
             .dependency("cardinal-components", "io.github.onyxstudios:Cardinal-Components-API")
             .dependency("cardinal-components-base", "io.github.onyxstudios.Cardinal-Components-API:cardinal-components-base")
             .dependency("cardinal-components-entity", "io.github.onyxstudios.Cardinal-Components-API:cardinal-components-entity")
