@@ -50,7 +50,7 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
 
     @Override
     public void apply(Project project) {
-        super.apply(project, "net.minecraftforge.gradle", WheelForgeExtension.class);
+        super.apply(project, "net.minecraftforge.gradle", new WheelForgeExtension());
 
         this.defaultTask("genIntellijRuns");
     }

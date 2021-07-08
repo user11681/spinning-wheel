@@ -3,6 +3,7 @@ package user11681.wheel;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -11,6 +12,8 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import org.gradle.api.JavaVersion;
@@ -19,16 +22,16 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.artifacts.ExternalModuleDependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
-import org.gradle.api.artifacts.repositories.PasswordCredentials;
 import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.LoggingManager;
-import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
@@ -50,15 +53,12 @@ import user11681.reflect.Accessor;
 import user11681.reflect.Classes;
 import user11681.uncheck.Uncheck;
 import user11681.wheel.dependency.WheelDependencyFactory;
-import user11681.wheel.dependency.configuration.BloatedDependencySet;
-import user11681.wheel.dependency.configuration.IntransitiveDependencySet;
 import user11681.wheel.extension.WheelExtension;
 import user11681.wheel.loader.TransformingClassLoader;
-import user11681.wheel.repository.WheelRepositoryFactory;
 import user11681.wheel.util.ThrowingAction;
 
 @SuppressWarnings({"SameParameterValue", "unused"})
-public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelExtension<E, P>> implements Plugin<Project> {
+public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelExtension> implements Plugin<Project> {
     public static final String MOD = "mod";
     public static final TransformingClassLoader loader = Classes.reinterpret(WheelPlugin.class.getClassLoader(), TransformingClassLoader.klass);
     public static Project currentProject;
@@ -72,7 +72,6 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
     protected Project rootProject;
     protected PluginContainer plugins;
     protected PluginManager pluginManager;
-    protected Convention convention;
     protected TaskContainer tasks;
     protected ExtensionContainer extensions;
     protected RepositoryHandler repositories;
@@ -157,6 +156,23 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
         return this.tasks.withType(type);
     }
 
+    public MavenArtifactRepository repository(String name, String url) {
+        URI resolvedURL = Uncheck.handle(() -> Uncheck.handle(() -> new URL(url), () -> new URL(WheelExtension.repository(url))).toURI());
+
+        return this.repositories.stream()
+            .filter(repository -> repository instanceof MavenArtifactRepository mavenRepository && resolvedURL.equals(mavenRepository.getUrl()))
+            .map(MavenArtifactRepository.class::cast)
+            .findAny()
+            .orElseGet(() -> this.repositories.maven(repository -> {
+                repository.setName(name);
+                repository.setUrl(resolvedURL);
+            }));
+    }
+
+    public MavenArtifactRepository repository(String url) {
+        return this.repository(null, url);
+    }
+
     protected void execute(String task) {
         this.execute(this.task(task));
     }
@@ -178,7 +194,7 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
         this.gradle.getTaskGraph().whenReady(graph -> this.execute(task));
     }
 
-    protected final void apply(Project project, String plugin, Class<E> extensionClass) {
+    protected final void apply(Project project, String plugin, E extension) {
         if (transformed.add(this.getClass())) {
             this.transform();
         }
@@ -187,13 +203,14 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
             throw new IllegalStateException("%s must be either specified before wheel without being applied or not specified at all.".formatted(plugin));
         }
 
-        latestMinecraftVersion = null;
+        if (this.isRoot()) {
+            latestMinecraftVersion = null;
+        }
 
         this.project = currentProject = project;
         this.rootProject = project.getRootProject();
         this.plugins = project.getPlugins();
         this.pluginManager = project.getPluginManager();
-        this.convention = project.getConvention();
         this.tasks = project.getTasks();
         this.extensions = project.getExtensions();
         this.repositories = project.getRepositories();
@@ -204,11 +221,11 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
         this.gradle = project.getGradle();
         this.buildScript = project.getBuildscript();
         this.logging = project.getLogging();
-        this.extension = this.extensions.create("wheel", extensionClass, this);
+        this.extension = extension;
+        this.extensions.add("wheel", extension);
 
         project.afterEvaluate((ThrowingAction<Project>) ignored -> this.afterEvaluate());
 
-        Classes.reinterpret(Accessor.getObject(this.repositories, "repositoryFactory"), WheelRepositoryFactory.klass);
         Classes.reinterpret(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.klass);
 
         this.plugins.apply(plugin);
@@ -260,10 +277,10 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
             }
 
             if (this.extension.publish.external.repository != null) {
-                publishing.getRepositories().maven((MavenArtifactRepository repository) -> {
+                publishing.getRepositories().maven(repository -> {
                     repository.setUrl(this.extension.publish.external.repository);
 
-                    repository.credentials(((PasswordCredentials credentials) -> {
+                    repository.credentials((credentials -> {
                         credentials.setUsername(this.extension.publish.external.username);
                         credentials.setPassword(this.extension.publish.external.password);
                     }));
@@ -285,6 +302,12 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
 
     protected void addRepositories() {
         this.repositories.mavenLocal();
+
+        this.repositories.all(repository -> {
+            if (repository instanceof MavenArtifactRepository mavenRepository) {
+                Optional.ofNullable(WheelExtension.repository(repository.getName())).ifPresent(mavenRepository::setUrl);
+            }
+        });
     }
 
     protected void addDependencies() {
@@ -292,24 +315,38 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
     }
 
     protected void configureConfigurations() {
-        this.configurations.all(configuration -> configuration.resolutionStrategy(strategy -> {
-            strategy.cacheDynamicVersionsFor(0, "seconds");
-            strategy.cacheChangingModulesFor(0, "seconds");
-        }));
+        this.configurations.all(configuration -> {
+            configuration.resolutionStrategy(strategy -> {
+                strategy.cacheDynamicVersionsFor(0, "seconds");
+                strategy.cacheChangingModulesFor(0, "seconds");
+            });
+
+            configuration.getDependencies().all(dependency -> {
+                if (dependency instanceof ExternalModuleDependency moduleDependency && dependency.getGroup() != null) {
+                    switch (dependency.getGroup()) {
+                        case "curse.maven", "curseforge", "cf" -> this.repository("Curse Maven", "curse-maven");
+                        case "jitpack" -> this.repository("JitPack", "jitpack");
+                    }
+                }
+            });
+        });
 
         Configuration intransitiveInclude = this.configurations.create("intransitiveInclude").setTransitive(false);
-        Configuration intransitive = this.configurations.create("intransitive").extendsFrom(intransitiveInclude).setTransitive(false);
         Configuration bloatedInclude = this.configurations.create("bloatedInclude");
-        Configuration bloated = this.configurations.create("bloated").extendsFrom(bloatedInclude);
         Configuration modInclude = this.configurations.create("modInclude").extendsFrom(bloatedInclude, intransitiveInclude);
         Configuration apiInclude = this.configurations.create("apiInclude");
+        Configuration bloated = this.configurations.create("bloated", configuration -> configuration.getAllDependencies().all(dependency -> {
+            if (dependency instanceof ModuleDependency moduleDependency) {
+                moduleDependency.exclude(Map.of("module", "fabric-api"));
+            }
+        })).extendsFrom(bloatedInclude);
+        Configuration intransitive = this.configurations.create("intransitive", configuration -> configuration.getAllDependencies().all(dependency -> {
+            if (dependency instanceof ModuleDependency moduleDependency) {
+                moduleDependency.setTransitive(false);
+            }
+        })).extendsFrom(intransitiveInclude).setTransitive(false);
 
         this.configurations.create(MOD).extendsFrom(modInclude, bloated, intransitive);
-
-        Classes.reinterpret(bloated.getDependencies(), BloatedDependencySet.klass);
-        Classes.reinterpret(bloatedInclude.getDependencies(), BloatedDependencySet.klass);
-        Classes.reinterpret(intransitive.getDependencies(), IntransitiveDependencySet.klass);
-        Classes.reinterpret(intransitiveInclude.getDependencies(), IntransitiveDependencySet.klass);
 
         this.configuration("api").extendsFrom(apiInclude);
         this.configuration("include").extendsFrom(apiInclude, modInclude);

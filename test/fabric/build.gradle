@@ -29,11 +29,16 @@ allprojects {
     }
 }
 
+repositories {
+    maven {name = "boundarybreaker"}
+}
+
 dependencies {
     mod("arrp")
     modInclude("api-screen-handler")
     modInclude("api-screen")
-    bloated("auto-config")
-    intransitive("mod-menu")
-    mod("better-slabs")
+    bloated("cloth-config")
+    // intransitive("mod-menu")
+    mod("curse.maven:modmenu-308702:3348711")
+    // mod("better-slabs")
 }

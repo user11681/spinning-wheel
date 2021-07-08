@@ -1,18 +1,14 @@
 package user11681.wheel.extension;
 
-import groovy.lang.Closure;
-import org.gradle.util.ConfigureUtil;
-import user11681.wheel.WheelPlugin;
+import org.gradle.api.Action;
 import user11681.wheel.dependency.RepositoryContainer;
 import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.publish.PublishingConfig;
 
-public abstract class WheelExtension<T extends WheelExtension<T, P>, P extends WheelPlugin<P, T>> {
-    public final P plugin;
-
+public abstract class WheelExtension {
     public boolean clean = true;
     public String minecraft;
-    public Compatibility java = new Compatibility();
+    public JavaVersions java = new JavaVersions();
     public PublishingConfig publish = new PublishingConfig();
     public RunDirectory run = new RunDirectory();
 
@@ -82,7 +78,8 @@ public abstract class WheelExtension<T extends WheelExtension<T, P>, P extends W
         dependencies.repository("jitpack", "https://jitpack.io")
             .dependency("astromine", "com.github.Chainmail-Studios:Astromine", "1.8.1")
             .dependency("fabric-asm", "com.github.Chocohead:Fabric-ASM", "master-SNAPSHOT")
-            .dependency("lil-tater-reloaded", "com.github.Yoghurt4C:LilTaterReloaded", "fabric-1.16-SNAPSHOT");
+            .dependency("lil-tater-reloaded", "com.github.Yoghurt4C:LilTaterReloaded", "fabric-1.16-SNAPSHOT")
+            .dependency("starlight", "com.github.Tuinity:Starlight", "fabric-SNAPSHOT");
         dependencies.repository("ladysnake", "https://ladysnake.jfrog.io/artifactory/mods")
             .dependency("cardinal-components", "io.github.onyxstudios:Cardinal-Components-API")
             .dependency("cardinal-components-base", "io.github.onyxstudios.Cardinal-Components-API:cardinal-components-base")
@@ -98,10 +95,6 @@ public abstract class WheelExtension<T extends WheelExtension<T, P>, P extends W
         dependencies.repository("wrenchable", "https://dl.bintray.com/zundrel/wrenchable");
     });
 
-    public WheelExtension(P plugin) {
-        this.plugin = plugin;
-    }
-
     public static String repository(String key) {
         return repositories.repository(key);
     }
@@ -114,16 +107,16 @@ public abstract class WheelExtension<T extends WheelExtension<T, P>, P extends W
         return repositories.entry(key);
     }
 
-    public void publish(Closure<?> closure) {
-        ConfigureUtil.configure(closure, this.publish);
+    public void publish(Action<PublishingConfig> action) {
+        action.execute(this.publish);
     }
 
     public void setPublish(boolean enabled) {
         this.publish.enabled = enabled;
     }
 
-    public void java(Closure<?> closure) {
-        ConfigureUtil.configure(closure, this.java);
+    public void java(Action<JavaVersions> action) {
+        action.execute(this.java);
     }
 
     public void setJava(Object version) {

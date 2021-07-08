@@ -1,2 +1,3 @@
-include(":fabric")
-include(":forge")
+for (String set : file("../src").list {file, name -> name != "common"}) {
+    include(":${set}")
+}

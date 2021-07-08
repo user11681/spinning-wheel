@@ -7,8 +7,8 @@ import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 import org.gradle.api.internal.artifacts.DefaultDependencyFactory;
 import user11681.reflect.Classes;
 import user11681.wheel.WheelPlugin;
-import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.WheelExtension;
+import user11681.wheel.extension.dependency.Dependency;
 
 @SuppressWarnings("ConstantConditions")
 public class WheelDependencyFactory extends DefaultDependencyFactory {
@@ -20,7 +20,6 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
 
     private static String changeVersion(String artifact, String version) {
         String[] segments = artifact.split(":");
-
         segments[2] = version;
 
         return String.join(":", segments);
@@ -51,18 +50,6 @@ public class WheelDependencyFactory extends DefaultDependencyFactory {
     }
 
     private static Object resolve(String dependency) {
-        if (dependency.startsWith("curse.maven:")) {
-            addRepository(WheelExtension.repository("curse-maven"));
-
-            return dependency;
-        }
-
-        if (dependency.startsWith("com.github.")) {
-            addRepository(WheelExtension.repository("jitpack"));
-
-            return dependency;
-        }
-
         String[] components = dependency.split(":");
 
         if (components.length == 2) {

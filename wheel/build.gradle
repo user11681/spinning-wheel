@@ -8,6 +8,12 @@ allprojects {
     sourceCompatibility = 16
     targetCompatibility = 16
 
+    sourceSets {
+        main {
+            java.srcDir(rootProject.file("../src/${project == rootProject ? "common" : project.name}"))
+        }
+    }
+
     repositories {
         mavenCentral()
 
@@ -46,13 +52,6 @@ allprojects {
                     password = System.properties["maven.password"]
                 }
             }
-        }
-    }
-
-    sourceSets {
-        main {
-            resources.srcDirs.clear()
-            java.srcDirs = [rootProject.file("../src/${project == rootProject ? "common" : project.name}")]
         }
     }
 }

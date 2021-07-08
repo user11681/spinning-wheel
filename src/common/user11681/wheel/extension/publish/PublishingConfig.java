@@ -1,7 +1,6 @@
 package user11681.wheel.extension.publish;
 
-import groovy.lang.Closure;
-import org.gradle.util.ConfigureUtil;
+import org.gradle.api.Action;
 
 public class PublishingConfig {
     public final ExternalRepositoryConfig external = new ExternalRepositoryConfig();
@@ -10,12 +9,12 @@ public class PublishingConfig {
     public boolean enabled = true;
     public boolean local = true;
 
-    public void external(Closure<?> closure) {
-        ConfigureUtil.configure(closure, this.external);
+    public void external(Action<ExternalRepositoryConfig> action) {
+        action.execute(this.external);
     }
 
-    public void publication(Closure<?> closure) {
-        ConfigureUtil.configure(closure, this.publication);
+    public void publication(Action<PublicationConfig> action) {
+        action.execute(this.publication);
     }
 
     public void setPublication(boolean enabled) {

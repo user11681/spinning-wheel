@@ -28,7 +28,7 @@ import user11681.wheel.util.FilteredPrintStream;
 
 public class WheelFabricPlugin extends WheelPlugin<WheelFabricPlugin, WheelFabricExtension> {
     private static final Map<String, String> latestYarnBuilds = new HashMap<>();
-    
+
     private LoomGradleExtension loom;
     private NamedDomainObjectContainer<RunConfigSettings> runConfigs;
 
@@ -38,7 +38,7 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricPlugin, WheelFabri
 
     @Override
     public void apply(Project project) {
-        super.apply(project, "fabric-loom", WheelFabricExtension.class);
+        super.apply(project, "fabric-loom", new WheelFabricExtension());
 
         this.loom = this.extensions.getByType(LoomGradleExtension.class);
         this.runConfigs = this.loom.getRunConfigs();
@@ -77,7 +77,6 @@ public class WheelFabricPlugin extends WheelPlugin<WheelFabricPlugin, WheelFabri
         super.configurePublication(publication);
 
         RemapJarTask remapJar = this.task("remapJar");
-
         publication.artifact(remapJar).builtBy(remapJar);
         publication.artifact(this.task("sourcesJar")).builtBy(this.task("remapSourcesJar"));
     }

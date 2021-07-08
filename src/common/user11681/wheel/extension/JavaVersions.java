@@ -1,6 +1,6 @@
 package user11681.wheel.extension;
 
-public class Compatibility {
+public class JavaVersions {
     public Object source;
     public Object target;
 
