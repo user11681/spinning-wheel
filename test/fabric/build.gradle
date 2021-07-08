@@ -39,6 +39,7 @@ dependencies {
     modInclude("api-screen")
     bloated("cloth-config")
     // intransitive("mod-menu")
-    mod("curse.maven:modmenu-308702:3348711")
+    mod("cf:modmenu-308702:3348711")
+    mod("jitpack:Tuinity/Starlight:1.0.0-RC2")
     // mod("better-slabs")
 }

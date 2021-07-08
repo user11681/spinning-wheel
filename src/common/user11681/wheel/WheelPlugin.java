@@ -24,6 +24,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.ExternalModuleDependency;
 import org.gradle.api.artifacts.ModuleDependency;
+import org.gradle.api.artifacts.ModuleVersionSelector;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
@@ -316,9 +317,25 @@ public abstract class WheelPlugin<P extends WheelPlugin<P, E>, E extends WheelEx
 
     protected void configureConfigurations() {
         this.configurations.all(configuration -> {
-            configuration.resolutionStrategy(strategy -> {
-                strategy.cacheDynamicVersionsFor(0, "seconds");
-                strategy.cacheChangingModulesFor(0, "seconds");
+            configuration.resolutionStrategy(resolution -> {
+                resolution.cacheDynamicVersionsFor(0, "seconds");
+                resolution.cacheChangingModulesFor(0, "seconds");
+
+                resolution.eachDependency(dependency -> {
+                    ModuleVersionSelector target = dependency.getTarget();
+
+                    switch (target.getGroup()) {
+                        case "curseforge", "cf" -> dependency.useTarget(target.toString().replaceFirst("curseforge|cf", "curse.maven"));
+                        case "jitpack" -> {
+                            String[] components = target.toString().split(":");
+                            String[] repository = target.getName().split("/", 2);
+                            components[0] = "com.github." + repository[0];
+                            components[1] = repository[1];
+
+                            dependency.useTarget(String.join(":", components));
+                        }
+                    }
+                });
             });
 
             configuration.getDependencies().all(dependency -> {

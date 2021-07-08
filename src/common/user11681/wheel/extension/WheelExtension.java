@@ -74,7 +74,6 @@ public abstract class WheelExtension {
             .dependency("conrad", "dev.inkwell:conrad");
         dependencies.repository("jamies-white-shirt", "https://maven.jamieswhiteshirt.com/libs-release")
             .dependency("reach-entity-attributes", "com.jamieswhiteshirt:reach-entity-attributes");
-        dependencies.repository("jcenter", "https//jcenter.bintray.com");
         dependencies.repository("jitpack", "https://jitpack.io")
             .dependency("astromine", "com.github.Chainmail-Studios:Astromine", "1.8.1")
             .dependency("fabric-asm", "com.github.Chocohead:Fabric-ASM", "master-SNAPSHOT")

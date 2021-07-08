@@ -1,3 +1,2 @@
-for (String set : file("../src").list {file, name -> name != "common"}) {
-    include(":${set}")
-}
+include(":wheel-fabric")
+include(":wheel-forge")

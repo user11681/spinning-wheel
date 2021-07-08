@@ -210,7 +210,7 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
     }
 
     private void generateRunConfigurations() {
-        Stream.of("client", "server").forEach(side -> this.userdevExtension.getRuns().register(side, configuration -> {
+        Stream.of("client", "server").forEach(side -> this.userdevExtension.getRuns().create(side, configuration -> {
             configuration.workingDirectory(this.file("run"));
 
             // configuration.environment("target", side);
@@ -221,6 +221,6 @@ public class WheelForgePlugin extends WheelPlugin<WheelForgePlugin, WheelForgeEx
             configuration.arg("-mixin.config=%s.mixins.json".formatted(this.name()));
 
             configuration.getMods().register(this.name(), mod -> mod.source(this.sourceSet("main")));
-        }).get());
+        }));
     }
 }

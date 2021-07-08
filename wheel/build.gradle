@@ -1,6 +1,8 @@
 allprojects {
-    plugins.apply("maven-publish")
-    plugins.apply("java-library")
+    plugins.with {
+        apply("maven-publish")
+        apply("java-library")
+    }
 
     group = "user11681"
     version = "0-SNAPSHOT"
@@ -8,9 +10,13 @@ allprojects {
     sourceCompatibility = 16
     targetCompatibility = 16
 
+    if (project != rootProject) {
+        ext.loader = name.replace("wheel-", "")
+    }
+
     sourceSets {
         main {
-            java.srcDir(rootProject.file("../src/${project == rootProject ? "common" : project.name}"))
+            java.srcDir(rootProject.file("../src/${project == rootProject ? "common" : loader}"))
         }
     }
 
@@ -66,8 +72,8 @@ subprojects {
     gradlePlugin {
         plugins {
             register(project.name) {
-                id = "wheel-${project.name}"
-                implementationClass = "user11681.wheel.Wheel${project.name.capitalize()}Plugin"
+                id = project.name
+                implementationClass = "user11681.wheel.Wheel${project.loader.capitalize()}Plugin"
             }
         }
     }
