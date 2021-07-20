@@ -301,12 +301,12 @@ public interface WheelPluginBase<E extends WheelExtension> extends Plugin<Projec
         return (T) this.tasks().getByName(name);
     }
 
-    default void log(String message, Object... arguments) {
-        this.logger().lifecycle(message, arguments);
-    }
-
     default void defaultTask(String... tasks) {
         Collections.addAll(this.defaultTasks(), tasks);
+    }
+
+    default void log(String message, Object... arguments) {
+        this.logger().lifecycle(message, arguments);
     }
 
     default Dependency dependency(String configuration, Object dependencyNotation) {

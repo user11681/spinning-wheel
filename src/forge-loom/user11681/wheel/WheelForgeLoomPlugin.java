@@ -1,9 +1,6 @@
 package user11681.wheel;
 
-import java.nio.file.Path;
-import net.fabricmc.loom.configuration.ide.RunConfigSettings;
 import net.fabricmc.loom.util.Constants;
-import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 import user11681.wheel.extension.WheelForgeLoomExtension;
@@ -12,16 +9,6 @@ public class WheelForgeLoomPlugin extends AbstractWheelForgePlugin<WheelForgeLoo
     @Override
     public void apply(@NotNull Project project) {
         super.apply(project, "dev.architectury.loom", new WheelForgeLoomExtension());
-    }
-
-    @Override
-    public Path cache() {
-        return this.loom().getUserCache().toPath();
-    }
-
-    @Override
-    public NamedDomainObjectContainer<RunConfigSettings> runConfigs() {
-        return this.loom().getRunConfigs();
     }
 
     @Override
