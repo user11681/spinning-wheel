@@ -1,0 +1,7 @@
+repositories {
+    maven {url = "https://maven.fabricmc.net"}
+}
+
+dependencies {
+    compileOnly("net.fabricmc:fabric-loom:latest.integration")
+}

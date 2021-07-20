@@ -3,5 +3,7 @@ repositories {
 }
 
 dependencies {
+    api(project(":wheel-loom-common"))
+
     api("net.fabricmc:fabric-loom:latest.integration")
 }

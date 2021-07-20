@@ -1,21 +1,54 @@
 package user11681.wheel;
 
+import java.nio.file.Path;
+import net.fabricmc.loom.configuration.ide.RunConfigSettings;
+import net.fabricmc.loom.util.Constants;
+import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
+import org.jetbrains.annotations.NotNull;
 import user11681.wheel.extension.WheelForgeLoomExtension;
 
-public class WheelForgeLoomPlugin extends WheelPlugin<WheelForgeLoomPlugin, WheelForgeLoomExtension> {
+public class WheelForgeLoomPlugin extends AbstractWheelForgePlugin<WheelForgeLoomPlugin, WheelForgeLoomExtension> implements WheelLoomPlugin<WheelForgeLoomExtension> {
     @Override
-    public void apply(Project project) {
+    public void apply(@NotNull Project project) {
         super.apply(project, "dev.architectury.loom", new WheelForgeLoomExtension());
     }
 
     @Override
-    protected void checkMinecraftVersion() {
-
+    public Path cache() {
+        return this.loom().getUserCache().toPath();
     }
 
     @Override
-    protected String metadataFile() {
-        return "mods.toml";
+    public NamedDomainObjectContainer<RunConfigSettings> runConfigs() {
+        return this.loom().getRunConfigs();
+    }
+
+    @Override
+    protected void beforeMain() {
+        this.extra().set("loom.platform", "forge");
+        this.extra().set("loom.forge.include", "true");
+    }
+
+    @Override
+    protected void addRepositories() {
+        super.addRepositories();
+
+        this.repository("https://maven.architectury.dev");
+    }
+
+    @Override
+    public void checkMinecraftVersion() {
+        super.checkMinecraftVersion();
+        WheelLoomPlugin.super.checkMinecraftVersion();
+    }
+
+    @Override
+    public void addDependencies() {
+        super.addDependencies();
+
+        this.dependency(Constants.Configurations.MINECRAFT, "com.mojang:minecraft:" + this.extension.minecraft);
+        this.dependency(Constants.Configurations.MAPPINGS, "net.fabricmc:yarn:%s+build.%s:v2".formatted(this.extension.minecraft, this.extension.yarn));
+        this.dependency(Constants.Configurations.FORGE, "net.minecraftforge:forge:%s-%s".formatted(this.extension.minecraft, this.extension.forge));
     }
 }

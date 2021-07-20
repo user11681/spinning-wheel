@@ -6,7 +6,10 @@ pluginManagement {
     }
 }
 
-//include(":forge")
-
 include(":fabric")
 include(":fabric:sub")
+
+//include(":forge")
+include(":forge-loom")
+
+includeBuild("../wheel")

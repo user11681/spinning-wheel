@@ -10,13 +10,9 @@ allprojects {
     sourceCompatibility = 16
     targetCompatibility = 16
 
-    if (project != rootProject) {
-        ext.loader = name.replace("wheel-", "")
-    }
-
     sourceSets {
         main {
-            java.srcDir(rootProject.file("../src/${project == rootProject ? "common" : loader}"))
+            java.srcDir(rootProject.file("../src/${project == rootProject ? "common" : project.type}"))
         }
     }
 
@@ -60,29 +56,33 @@ allprojects {
             }
         }
     }
-}
 
-subprojects {
-    plugins.apply("java-gradle-plugin")
-
-    dependencies {
-        api(rootProject)
-    }
-
-    gradlePlugin {
-        plugins {
-            register(project.name) {
-                id = project.name
-                implementationClass = "user11681.wheel.Wheel${project.loader.capitalize()}Plugin"
+    if (!plugin) {
+        publishing {
+            publications {
+                maven(MavenPublication) {
+                    from(components.java)
+                }
             }
         }
     }
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from(components.java)
+subprojects {
+    dependencies {
+        api(rootProject)
+    }
+
+    if (plugin) {
+        plugins.apply("java-gradle-plugin")
+
+        gradlePlugin {
+            plugins {
+                register(project.name) {
+                    id = project.name
+                    implementationClass = "user11681.wheel.Wheel${Arrays.stream(project.type.split("-")).map{it.capitalize()}.toArray().join()}Plugin"
+                }
+            }
         }
     }
 }

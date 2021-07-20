@@ -8,14 +8,14 @@ plugins {
     id("wheel-fabric").version("latest.integration")
 }
 
+if (!plugins.hasPlugin("wheel-fabric")) {
+    return
+}
+
 allprojects {
     afterEvaluate {
         tasks.publish.enabled = false
     }
-}
-
-if (!plugins.hasPlugin("wheel-fabric")) {
-    return
 }
 
 allprojects {

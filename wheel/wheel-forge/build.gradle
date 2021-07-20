@@ -6,6 +6,8 @@ repositories {
 }
 
 dependencies {
+    api(project(":wheel-forge-common"))
+
     api("net.minecraftforge.gradle:ForgeGradle:latest.integration")
     api("com.github.jengelman.gradle.plugins:shadow:latest.integration")
     api("org.spongepowered:mixingradle:latest.integration")
