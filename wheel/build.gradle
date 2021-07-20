@@ -57,7 +57,18 @@ allprojects {
         }
     }
 
-    if (!plugin) {
+    if (plugin) {
+        plugins.apply("java-gradle-plugin")
+
+        gradlePlugin {
+            plugins {
+                register(project.name) {
+                    id = project.name
+                    implementationClass = "user11681.wheel.Wheel${Arrays.stream(project.type.split("-")).map{it.capitalize()}.toArray().join()}Plugin"
+                }
+            }
+        }
+    } else {
         publishing {
             publications {
                 maven(MavenPublication) {
@@ -71,18 +82,5 @@ allprojects {
 subprojects {
     dependencies {
         api(rootProject)
-    }
-
-    if (plugin) {
-        plugins.apply("java-gradle-plugin")
-
-        gradlePlugin {
-            plugins {
-                register(project.name) {
-                    id = project.name
-                    implementationClass = "user11681.wheel.Wheel${Arrays.stream(project.type.split("-")).map{it.capitalize()}.toArray().join()}Plugin"
-                }
-            }
-        }
     }
 }
