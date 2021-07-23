@@ -8,7 +8,7 @@ import user11681.wheel.extension.WheelForgeLoomExtension;
 public class WheelForgeLoomPlugin extends AbstractWheelForgePlugin<WheelForgeLoomPlugin, WheelForgeLoomExtension> implements WheelLoomPlugin<WheelForgeLoomExtension> {
     @Override
     public void apply(@NotNull Project project) {
-        super.apply(project, "dev.architectury.loom", new WheelForgeLoomExtension());
+        super.apply(project, "dev.architectury.loom", new WheelForgeLoomExtension(project));
     }
 
     @Override

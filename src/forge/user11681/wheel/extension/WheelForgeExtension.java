@@ -1,7 +1,13 @@
 package user11681.wheel.extension;
 
+import org.gradle.api.Project;
+
 public class WheelForgeExtension extends WheelExtension implements WheelForgeExtensionBase {
     public String forge;
+
+    public WheelForgeExtension(Project project) {
+        super(project);
+    }
 
     @Override
     public String forge() {

@@ -34,7 +34,7 @@ public class WheelForgePlugin extends AbstractWheelForgePlugin<WheelForgePlugin,
 
     @Override
     public void apply(@NotNull Project project) {
-        super.apply(project, "net.minecraftforge.gradle", new WheelForgeExtension());
+        super.apply(project, "net.minecraftforge.gradle", new WheelForgeExtension(project));
 
         this.defaultTask(GEN_INTELLIJ_RUNS);
     }

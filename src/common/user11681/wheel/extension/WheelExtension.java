@@ -1,18 +1,25 @@
 package user11681.wheel.extension;
 
-import org.gradle.api.Action;
+import groovy.lang.Closure;
+import org.gradle.api.Project;
 import user11681.wheel.dependency.RepositoryContainer;
 import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.publish.PublishingConfig;
 
 public abstract class WheelExtension {
+    public final Project project;
+
     public boolean clean = true;
     public String minecraft;
     public JavaVersions java = new JavaVersions();
     public PublishingConfig publish = new PublishingConfig();
     public RunDirectory run = new RunDirectory();
 
-    public static final RepositoryContainer repositories = new RepositoryContainer().configure((RepositoryContainer dependencies) -> {
+    public WheelExtension(Project project) {
+        this.project = project;
+    }
+
+    public static final RepositoryContainer repositories = new RepositoryContainer().configure(dependencies -> {
         dependencies.repository("auoeke", "https://auoeke.jfrog.io/artifactory/maven")
             .dependency("bason", "user11681:bason")
             .dependency("cell", "user11681:cell")
@@ -106,16 +113,16 @@ public abstract class WheelExtension {
         return repositories.entry(key);
     }
 
-    public void publish(Action<PublishingConfig> action) {
-        action.execute(this.publish);
+    public void publish(Closure<Void> action) {
+        this.project.configure(this.publish, action);
     }
 
     public void setPublish(boolean enabled) {
         this.publish.enabled = enabled;
     }
 
-    public void java(Action<JavaVersions> action) {
-        action.execute(this.java);
+    public void java(Closure<Void> action) {
+        this.project.configure(this.java, action);
     }
 
     public void setJava(Object version) {

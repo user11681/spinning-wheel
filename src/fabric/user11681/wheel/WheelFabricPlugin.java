@@ -9,7 +9,7 @@ import user11681.wheel.extension.WheelFabricExtension;
 public class WheelFabricPlugin extends WheelPlugin<WheelFabricPlugin, WheelFabricExtension> implements WheelLoomPlugin<WheelFabricExtension> {
     @Override
     public void apply(@NotNull Project project) {
-        super.apply(project, "fabric-loom", new WheelFabricExtension());
+        super.apply(project, "fabric-loom", new WheelFabricExtension(project));
     }
 
     @Override

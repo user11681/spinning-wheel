@@ -26,6 +26,10 @@ allprojects {
         nospam = false
         publish = false
         channel = "latest"
+
+        java {
+            target = 8
+        }
     }
 }
 

@@ -1,9 +1,15 @@
 package user11681.wheel.extension;
 
+import org.gradle.api.Project;
+
 public class WheelForgeLoomExtension extends WheelExtension implements WheelForgeExtensionBase, WheelLoomExtensionBase {
     public String yarn;
     public String forge;
     public String genSources;
+
+    public WheelForgeLoomExtension(Project project) {
+        super(project);
+    }
 
     @Override
     public String forge() {
