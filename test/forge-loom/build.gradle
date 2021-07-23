@@ -10,6 +10,10 @@ plugins {
     id("wheel-forge-loom")
 }
 
+wheel {
+    minecraft = "1.16.5"
+}
+
 runClient {
     executable = "/usr/lib/jvm/java-8-openjdk/jre/bin/java"
     jvmArgs += ["-XX:+IgnoreUnrecognizedVMOptions"]
