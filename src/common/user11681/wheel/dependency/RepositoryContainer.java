@@ -1,14 +1,13 @@
 package user11681.wheel.dependency;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.gradle.api.Action;
 import user11681.wheel.extension.dependency.Dependency;
 import user11681.wheel.extension.dependency.Repository;
+import user11681.wheel.util.ObservableMap;
 import user11681.wheel.util.Util;
 
 public class RepositoryContainer {
-    public final Map<String, Repository> repositories = new HashMap<>();
+    public final ObservableMap<String, Repository> repositories = new ObservableMap<>();
 
     public RepositoryContainer configure(Action<RepositoryContainer> action) {
         action.execute(this);

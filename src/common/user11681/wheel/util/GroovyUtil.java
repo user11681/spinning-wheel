@@ -1,5 +1,6 @@
 package user11681.wheel.util;
 
+import groovy.lang.Closure;
 import java.util.Arrays;
 import java.util.List;
 import org.codehaus.groovy.runtime.callsite.CallSite;
@@ -31,5 +32,15 @@ public class GroovyUtil {
         }
 
         return object;
+    }
+
+    public static Closure<Void> closure(Runnable runnable) {
+        return new Closure<Void>(null) {
+            public Void doCall() {
+                runnable.run();
+
+                return null;
+            }
+        };
     }
 }
