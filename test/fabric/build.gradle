@@ -19,7 +19,7 @@ allprojects {
 }
 
 allprojects {
-    group = "user11681"
+    group = "net.auoeke"
     version = "1.2.5"
 
     wheel {

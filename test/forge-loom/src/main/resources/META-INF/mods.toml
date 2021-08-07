@@ -1,11 +1,11 @@
 modLoader = "javafml"
 loaderVersion = "[36,)"
-issueTrackerURL = "https://github.com/user11681/wheel"
+issueTrackerURL = "https://github.com/auoeke/wheel"
 license = "CC0"
 
 [[mods]]
 modId = "test"
 version = "${file.jarVersion}"
 displayName = "test"
-authors = "user11681"
+authors = "auoeke"
 description = "wheel test mod"

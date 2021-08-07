@@ -4,7 +4,7 @@ allprojects {
         apply("java-library")
     }
 
-    group = "user11681"
+    group = "net.auoeke"
     version = "0-SNAPSHOT"
 
     sourceCompatibility = 16
