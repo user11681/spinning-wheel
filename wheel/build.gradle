@@ -64,7 +64,7 @@ allprojects {
             plugins {
                 register(project.name) {
                     id = project.name
-                    implementationClass = "user11681.wheel.Wheel${Arrays.stream(project.type.split("-")).map{it.capitalize()}.toArray().join()}Plugin"
+                    implementationClass = "net.auoeke.wheel.Wheel${Arrays.stream(project.type.split("-")).map{it.capitalize()}.toArray().join()}Plugin"
                 }
             }
         }
