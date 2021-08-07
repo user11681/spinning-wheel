@@ -11,6 +11,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import net.fabricmc.loom.LoomGradleExtension;
+import net.fabricmc.loom.api.LoomGradleExtensionAPI;
 import net.fabricmc.loom.configuration.ide.RunConfigSettings;
 import net.fabricmc.loom.task.RunGameTask;
 import org.codehaus.groovy.runtime.StringGroovyMethods;
@@ -91,7 +92,7 @@ public interface WheelLoomPlugin<E extends WheelExtension & WheelLoomExtensionBa
     }
 
     default LoomGradleExtension loom() {
-        return this.extension(LoomGradleExtension.class);
+        return (LoomGradleExtension) this.extension(LoomGradleExtensionAPI.class);
     }
 
     default Path cache() {
