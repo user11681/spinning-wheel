@@ -46,6 +46,4 @@ dependencies {
     mod("cf:modmenu-308702:3348711")
     mod("jitpack:Tuinity/Starlight:1.0.0-RC2")
     // mod("better-slabs")
-
-    testMod("api")
 }
