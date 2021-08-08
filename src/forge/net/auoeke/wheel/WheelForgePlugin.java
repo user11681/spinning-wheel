@@ -140,7 +140,7 @@ public class WheelForgePlugin extends AbstractWheelForgePlugin<WheelForgePlugin,
 
     @Override
     public void configureConfigurations() {
-        this.configuration(ShadowBasePlugin.getCONFIGURATION_NAME()).extendsFrom(this.configurations().create("include"));
+        this.configuration(ShadowBasePlugin.getCONFIGURATION_NAME()).extendsFrom(this.createConfiguration("include"));
 
         super.configureConfigurations();
     }

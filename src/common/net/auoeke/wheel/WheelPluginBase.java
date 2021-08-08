@@ -1,7 +1,5 @@
 package net.auoeke.wheel;
 
-import net.auoeke.wheel.extension.WheelExtension;
-import net.auoeke.wheel.util.Lazy;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
@@ -11,6 +9,9 @@ import java.net.http.HttpResponse;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import net.auoeke.wheel.extension.WheelExtension;
+import net.auoeke.wheel.util.Lazy;
+import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -40,6 +41,7 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskCollection;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.internal.Actions;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.language.jvm.tasks.ProcessResources;
 import user11681.uncheck.ThrowingRunnable;
@@ -121,22 +123,22 @@ public interface WheelPluginBase<E extends WheelExtension> extends Plugin<Projec
             });
         });
 
-        Configuration intransitiveInclude = this.configurations().create("intransitiveInclude").setTransitive(false);
-        Configuration bloatedInclude = this.configurations().create("bloatedInclude");
-        Configuration modInclude = this.configurations().create("modInclude").extendsFrom(bloatedInclude, intransitiveInclude);
-        Configuration apiInclude = this.configurations().create("apiInclude");
-        Configuration bloated = this.configurations().create("bloated", configuration -> configuration.getAllDependencies().all(dependency -> {
+        Configuration intransitiveInclude = this.createConfiguration("intransitiveInclude").setTransitive(false);
+        Configuration bloatedInclude = this.createConfiguration("bloatedInclude");
+        Configuration modInclude = this.createConfiguration("modInclude").extendsFrom(bloatedInclude, intransitiveInclude);
+        Configuration apiInclude = this.createConfiguration("apiInclude");
+        Configuration bloated = this.createConfiguration("bloated", configuration -> configuration.getAllDependencies().all(dependency -> {
             if (dependency instanceof ModuleDependency moduleDependency) {
                 moduleDependency.exclude(Map.of("module", "fabric-api"));
             }
         })).extendsFrom(bloatedInclude);
-        Configuration intransitive = this.configurations().create("intransitive", configuration -> configuration.getAllDependencies().all(dependency -> {
+        Configuration intransitive = this.createConfiguration("intransitive", configuration -> configuration.getAllDependencies().all(dependency -> {
             if (dependency instanceof ModuleDependency moduleDependency) {
                 moduleDependency.setTransitive(false);
             }
         })).extendsFrom(intransitiveInclude).setTransitive(false);
 
-        this.configurations().create(MOD).extendsFrom(modInclude, bloated, intransitive);
+        this.createConfiguration(MOD).extendsFrom(modInclude, bloated, intransitive);
 
         this.configuration("api").extendsFrom(apiInclude);
         this.configuration("include").extendsFrom(apiInclude, modInclude);
@@ -157,10 +159,10 @@ public interface WheelPluginBase<E extends WheelExtension> extends Plugin<Projec
             this.task("clean").finalizedBy("build");
         }
 
-        this.tasks(JavaCompile.class).forEach(task -> task.getOptions().setEncoding("UTF-8"));
-        this.tasks(Jar.class).forEach(task -> task.from("LICENSE"));
+        this.tasks(JavaCompile.class).all(task -> task.getOptions().setEncoding("UTF-8"));
+        this.tasks(Jar.class).all(task -> task.from("LICENSE"));
 
-        this.tasks(ProcessResources.class).forEach(task -> task.filesMatching(
+        this.tasks(ProcessResources.class).all(task -> task.filesMatching(
             this.metadataFile(),
             file -> file.filter(contents -> contents.replaceAll("\\$(\\{version}|version)", String.valueOf(this.project().getVersion())))
         ));
@@ -180,10 +182,10 @@ public interface WheelPluginBase<E extends WheelExtension> extends Plugin<Projec
                 publishing.getRepositories().maven(repository -> {
                     repository.setUrl(this.extension().publish.external.repository);
 
-                    repository.credentials((credentials -> {
+                    repository.credentials(credentials -> {
                         credentials.setUsername(this.extension().publish.external.username);
                         credentials.setPassword(this.extension().publish.external.password);
-                    }));
+                    });
                 });
             }
         }
@@ -278,6 +280,14 @@ public interface WheelPluginBase<E extends WheelExtension> extends Plugin<Projec
 
     default Configuration configuration(String name) {
         return this.configurations().getByName(name);
+    }
+
+    default Configuration createConfiguration(String name) {
+        return this.createConfiguration(name, Actions.doNothing());
+    }
+
+    default Configuration createConfiguration(String name, Action<Configuration> initializer) {
+        return this.configurations().create(name, initializer);
     }
 
     default File file(Object path) {
