@@ -20,7 +20,7 @@ public abstract class WheelExtension {
     }
 
     public static final RepositoryContainer repositories = new RepositoryContainer().configure(dependencies -> {
-        dependencies.repository("net/auoeke", "https://auoeke.jfrog.io/artifactory/maven")
+        dependencies.repository("auoeke", "https://auoeke.jfrog.io/artifactory/maven")
             .dependency("bason", "user11681:bason")
             .dependency("cell", "user11681:cell")
             .dependency("common-formatting", "user11681:common-formatting")
@@ -75,7 +75,7 @@ public abstract class WheelExtension {
             .dependency("api-screen-handler", "net.fabricmc.fabric-api:fabric-screen-handler-api-v1")
             .dependency("api-tag-extensions", "net.fabricmc.fabric-api:fabric-tag-extensions-v0");
         dependencies.repository("gross-fabric-hackers", "https://raw.githubusercontent.com/GrossFabricHackers/maven/master");
-        dependencies.repository("halfof2", "https://raw.githubusercontent.com/Devan-Kerman/Devan-Repo/master")
+        dependencies.repository("halfof2", "https://storage.googleapis.com/devan-maven")
             .dependency("arrp", "net.devtech:arrp");
         dependencies.repository("haven-king", "https://hephaestus.dev/release")
             .dependency("conrad", "dev.inkwell:conrad");
@@ -97,7 +97,7 @@ public abstract class WheelExtension {
             .dependency("cloth-config", "me.shedaniel.cloth:cloth-config-fabric")
             .dependency("rei", "me.shedaniel:RoughlyEnoughItems");
         dependencies.repository("terraformers", "https://maven.terraformersmc.com")
-            .dependency("mod-menu", "com.terraformersmc:modmenu");
+            .dependency("modmenu", "com.terraformersmc:modmenu");
         dependencies.repository("wrenchable", "https://dl.bintray.com/zundrel/wrenchable");
     });
 
