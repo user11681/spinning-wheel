@@ -69,8 +69,8 @@ public interface WheelLoomPlugin<E extends WheelExtension & WheelLoomExtensionBa
     default void configurePublication(MavenPublication publication) {
         WheelPluginBase.super.configurePublication(publication);
 
-        publication.artifact("remapJar");
-        publication.artifact("sourcesJar").builtBy("remapSourcesJar");
+        publication.artifact(this.task("remapJar"));
+        publication.artifact(this.task("sourcesJar")).builtBy(this.task("remapSourcesJar"));
     }
 
     @Override
