@@ -1,6 +1,112 @@
-["publish", "publishToMavenLocal"].forEach {String name ->
-    tasks.register(name, Exec) {Exec task ->
-        task.workingDir(file("wheel"))
-        task.commandLine(file("gradlew"), name)
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+allprojects {
+    plugins.with {
+        apply("maven-publish")
+        apply("java-library")
     }
+
+    group = "net.auoeke"
+    version = "0-SNAPSHOT"
+
+    sourceCompatibility = 16
+    targetCompatibility = 16
+
+    sourceSets {
+        main {
+            groovy.srcDirs = [file("src")]
+        }
+    }
+
+    repositories {
+        mavenCentral()
+
+        maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
+    }
+
+    dependencies {
+        api(gradleApi())
+        api("net.gudenau.lib:unsafe:latest.integration")
+        api("net.auoeke:reflect:latest.integration")
+        api("user11681:uncheck:latest.integration")
+        api("org.ow2.asm:asm:latest.integration")
+        api("org.ow2.asm:asm-tree:latest.integration")
+
+        compileOnly("org.jetbrains:annotations:latest.integration")
+    }
+
+    // java {
+    //     withSourcesJar()
+    // }
+
+    jar {
+        from(rootProject.file("LICENSE"))
+    }
+
+    publishing {
+        repositories {
+            maven {
+                url = "https://maven.auoeke.net"
+
+                credentials {
+                    username = System.properties["maven.username"]
+                    password = System.properties["maven.password"]
+                }
+            }
+        }
+    }
+
+    if (plugin) {
+        plugins.apply("groovy-gradle-plugin")
+
+        pluginUnderTestMetadata {
+            rootProject.test.dependsOn(it)
+
+            doLast {
+                var destination = rootProject.buildDir.toPath().resolve("pluginMetadata")
+                println destination
+                Files.createDirectories(destination)
+                Files.move(outputDirectory.asFile.get().toPath().resolve(METADATA_FILE_NAME), destination.resolve("$project.name-$METADATA_FILE_NAME"), StandardCopyOption.REPLACE_EXISTING)
+            }
+        }
+
+        gradlePlugin {
+            plugins {
+                register("wheel-$project.name") {
+                    id = name
+                    implementationClass = "net.auoeke.wheel.Wheel${project.name.split("-").collect{it.capitalize()}.join()}Plugin"
+                }
+            }
+        }
+    } else {
+        publishing {
+            publications {
+                maven(MavenPublication) {
+                    from(components.java)
+                }
+            }
+        }
+    }
+}
+
+subprojects {
+    dependencies {
+        api(rootProject)
+    }
+}
+
+sourceSets {
+    test {
+        groovy.srcDir("test/src")
+    }
+}
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter-api:latest.integration")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+}
+
+test {
+    useJUnitPlatform()
 }

@@ -1,0 +1,13 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+
+        maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
+    }
+}
+
+include(":fabric")
+include(":fabric:sub")
+
+//include(":forge")
+include(":forge-loom")

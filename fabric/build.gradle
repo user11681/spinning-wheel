@@ -1,0 +1,9 @@
+repositories {
+    maven {url = "https://maven.fabricmc.net"}
+}
+
+dependencies {
+    api(project(":loom-common"))
+
+    api("net.fabricmc:fabric-loom:latest.integration")
+}

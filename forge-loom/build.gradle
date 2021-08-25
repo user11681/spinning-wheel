@@ -1,0 +1,12 @@
+repositories {
+    maven {url = "https://maven.fabricmc.net"}
+    maven {url = "https://maven.minecraftforge.net"}
+    maven {url = "https://maven.architectury.dev"}
+}
+
+dependencies {
+    api(project(":forge-common"))
+    api(project(":loom-common"))
+
+    api("dev.architectury:architectury-loom:latest.integration")
+}

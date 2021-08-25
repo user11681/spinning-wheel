@@ -1,4 +1,23 @@
-rootProject.name = "root"
+void plugin(String path) {
+    include(path)
 
-includeBuild("wheel")
-includeBuild("test")
+    // There has to be a better alternative that does not involve iterating over all projects.
+    gradle.allprojects {
+        if (it.path == path) {
+            ext.plugin = true
+        }
+    }
+}
+
+rootProject.name = "wheel"
+
+gradle.allprojects {
+    ext.plugin = false
+}
+
+include(":forge-common")
+include(":loom-common")
+
+plugin(":fabric")
+plugin(":forge")
+plugin(":forge-loom")
