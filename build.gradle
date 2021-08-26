@@ -1,10 +1,12 @@
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
+plugins {
+    id("org.jetbrains.kotlin.jvm").version("latest.release")
+}
 
 allprojects {
     plugins.with {
         apply("maven-publish")
         apply("java-library")
+        apply("org.jetbrains.kotlin.jvm")
     }
 
     group = "net.auoeke"
@@ -15,7 +17,8 @@ allprojects {
 
     sourceSets {
         main {
-            groovy.srcDirs = [file("src")]
+            java.srcDir("src")
+            kotlin.srcDir("src")
         }
     }
 
@@ -29,16 +32,21 @@ allprojects {
         api(gradleApi())
         api("net.gudenau.lib:unsafe:latest.integration")
         api("net.auoeke:reflect:latest.integration")
-        api("user11681:uncheck:latest.integration")
         api("org.ow2.asm:asm:latest.integration")
         api("org.ow2.asm:asm-tree:latest.integration")
 
         compileOnly("org.jetbrains:annotations:latest.integration")
     }
 
-    // java {
-    //     withSourcesJar()
-    // }
+    tasks.withType(compileKotlin.class) {
+        kotlinOptions {
+            jvmTarget = targetCompatibility
+        }
+    }
+
+    java {
+        withSourcesJar()
+    }
 
     jar {
         from(rootProject.file("LICENSE"))
@@ -58,16 +66,20 @@ allprojects {
     }
 
     if (plugin) {
-        plugins.apply("groovy-gradle-plugin")
+        plugins.apply("java-gradle-plugin")
 
         pluginUnderTestMetadata {
             rootProject.test.dependsOn(it)
 
             doLast {
-                var destination = rootProject.buildDir.toPath().resolve("pluginMetadata")
-                println destination
-                Files.createDirectories(destination)
-                Files.move(outputDirectory.asFile.get().toPath().resolve(METADATA_FILE_NAME), destination.resolve("$project.name-$METADATA_FILE_NAME"), StandardCopyOption.REPLACE_EXISTING)
+                def destinationDirectory = "$rootProject.buildDir/pluginMetadata" as File
+                destinationDirectory.mkdirs()
+
+                def destination = "${destinationDirectory}/$project.name-$METADATA_FILE_NAME" as File
+                destination.delete()
+
+                def output = "${outputDirectory.asFile.get()}/$METADATA_FILE_NAME" as File
+                output.renameTo(destination)
             }
         }
 
@@ -75,7 +87,7 @@ allprojects {
             plugins {
                 register("wheel-$project.name") {
                     id = name
-                    implementationClass = "net.auoeke.wheel.Wheel${project.name.split("-").collect{it.capitalize()}.join()}Plugin"
+                    implementationClass = "net.auoeke.wheel.Wheel${project.name.split("-").collect {it.capitalize()} join()}Plugin"
                 }
             }
         }
@@ -91,6 +103,8 @@ allprojects {
 }
 
 subprojects {
+    buildDir = "$rootProject.buildDir/$project.name"
+
     dependencies {
         api(rootProject)
     }
@@ -98,11 +112,12 @@ subprojects {
 
 sourceSets {
     test {
-        groovy.srcDir("test/src")
+        kotlin.srcDir("test/src")
     }
 }
 
 dependencies {
+    testImplementation(gradleTestKit())
     testImplementation("org.junit.jupiter:junit-jupiter-api:latest.integration")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
