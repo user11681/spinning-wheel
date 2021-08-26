@@ -53,7 +53,7 @@ abstract class AbstractWheelForgePlugin<P : AbstractWheelForgePlugin<P, E>, E> :
         protected const val FORGE_METADATA_URL = "https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"
 
         protected fun versioning(): Node = DocumentBuilderFactory
-           .newDefaultInstance()
+           .newInstance()
            .newDocumentBuilder()
            .parse(FORGE_METADATA_URL)
            .firstChild
