@@ -79,6 +79,8 @@ abstract class WheelPlugin<P : WheelPlugin<P, E>, E : WheelExtension> : WheelPlu
         private val transformed: MutableSet<Class<out Any>> = HashSet()
 
         var latestMinecraftVersion: String? = null
+
+        // This does not work. Todo: fix
         var currentProject: Project? = null
 
         @JvmStatic

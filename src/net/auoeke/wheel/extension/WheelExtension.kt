@@ -132,7 +132,6 @@ abstract class WheelExtension(val project: Project) {
             }
 
             repository("shedaniel", "https://maven.shedaniel.me") {
-                dependency("auto-config", "me.sargunvohra.mcmods:autoconfig1u")
                 dependency("basic-math", "me.shedaniel.cloth:basic-math")
                 dependency("cloth-config", "me.shedaniel.cloth:cloth-config-fabric")
                 dependency("rei", "me.shedaniel:RoughlyEnoughItems")

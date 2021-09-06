@@ -15,7 +15,7 @@ gradle.allprojects {
     ext.plugin = false
 }
 
-include(":forge-common")
+//include(":forge-common")
 include(":loom-common")
 
 plugin(":fabric")

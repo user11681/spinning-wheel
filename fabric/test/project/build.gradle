@@ -21,10 +21,7 @@ allprojects {
         publish = false
         channel = "latest"
         genSources = null
-
-        java {
-            target = 8
-        }
+        java  = 16
     }
 }
 
@@ -33,14 +30,11 @@ repositories {
 }
 
 dependencies {
-/*
     mod("arrp")
     modInclude("api-screen-handler")
     modInclude("api-screen")
     bloated("cloth-config")
-    // intransitive("mod-menu")
-    mod("cf:modmenu-308702:3348711")
+    intransitive("mod-menu")
     mod("jitpack:Tuinity/Starlight:1.0.0-RC2")
     // mod("better-slabs")
-*/
 }

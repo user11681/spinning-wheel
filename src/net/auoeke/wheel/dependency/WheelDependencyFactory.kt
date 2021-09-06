@@ -12,8 +12,9 @@ import net.auoeke.wheel.extension.dependency.Dependency as WheelDependency
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 class WheelDependencyFactory : DefaultDependencyFactory(null, null, null, null, null, null) {
-    override fun createDependency(dependencyNotation: Any): Dependency {
-        return if (dependencyNotation is String) super.createDependency(resolve(dependencyNotation)) else super.createDependency(dependencyNotation)
+    override fun createDependency(dependencyNotation: Any): Dependency = when (dependencyNotation) {
+        is String -> super.createDependency(resolve(dependencyNotation))
+        else -> super.createDependency(dependencyNotation)
     }
 
     companion object {
@@ -27,7 +28,7 @@ class WheelDependencyFactory : DefaultDependencyFactory(null, null, null, null, 
         }
 
         private fun addRepository(repository: String?) {
-            if (WheelPlugin.currentProject != null && repository != null) {
+            if (WheelPlugin.currentProject !== null && repository !== null) {
                 val repositories = WheelPlugin.currentProject!!.repositories
 
                 for (artifactRepository in repositories) {
@@ -63,11 +64,11 @@ class WheelDependencyFactory : DefaultDependencyFactory(null, null, null, null, 
 
             val entry = WheelExtension.dependency(dependency)
 
-            return if (this.addRepository(entry)) {
-                entry!!.artifact
-            } else if (WheelPlugin.currentProject !== null && WheelPlugin.currentProject!!.findProject(dependency) !== null) {
-                WheelPlugin.currentProject!!.dependencies.project(mapOf("path" to dependency))
-            } else dependency
+            return when {
+                this.addRepository(entry) -> entry!!.artifact
+                WheelPlugin.currentProject !== null && WheelPlugin.currentProject!!.findProject(dependency) !== null -> WheelPlugin.currentProject!!.dependencies.project(mapOf("path" to dependency))
+                else -> dependency
+            }
         }
     }
 }

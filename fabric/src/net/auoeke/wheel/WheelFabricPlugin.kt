@@ -10,7 +10,7 @@ class WheelFabricPlugin : WheelPlugin<WheelFabricPlugin, WheelFabricExtension>()
     override val defaultJavaVersion: String = "16"
 
     override fun apply(project: Project) {
-        super<WheelPlugin>.apply(project, "fabric-loom", WheelFabricExtension(project))
+        super.apply(project, "fabric-loom", WheelFabricExtension(project))
     }
 
     override fun checkMinecraftVersion() {
@@ -18,7 +18,10 @@ class WheelFabricPlugin : WheelPlugin<WheelFabricPlugin, WheelFabricExtension>()
             if (latestMinecraftVersion === null) {
                 latestMinecraftVersion = this.meta(
                     "game",
-                    if (this.extension.channel == Channel.RELEASE) "(?<=\"version\": \").*?(?=\",\\s*\"stable\": true)" else "(?<=\"version\": \").*?(?=\")"
+                    when (this.extension.channel) {
+                        Channel.RELEASE -> "(?<=\"version\": \").*?(?=\",\\s*\"stable\": true)"
+                        Channel.LATEST -> "(?<=\"version\": \").*?(?=\")"
+                    }
                 ).filter {!it.group().contains("experiment")}.findFirst().orElseThrow().group()
             }
 

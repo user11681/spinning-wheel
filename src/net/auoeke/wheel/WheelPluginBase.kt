@@ -93,8 +93,8 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
                 resolution.eachDependency {dependency ->
                     val target = dependency.target
 
-                    when (target.group) {
-                        "curseforge", "cf" -> dependency.useTarget(target.string.replaceFirst("curseforge|cf", "curse.maven"))
+                    when (val group = target.group) {
+                        "curseforge", "cf" -> dependency.useTarget(target.string.replaceFirst(group, "curse.maven"))
                         "jitpack" -> {
                             val components = target.string.split(':') as MutableList<String>
                             val repository = target.name.split('/', limit = 2)

@@ -9,4 +9,9 @@ class FabricTest : WheelTest() {
     fun run() {
         super.debug().build()
     }
+
+    @Test
+    fun build() {
+        super.debug("build").build()
+    }
 }
