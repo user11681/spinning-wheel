@@ -1,3 +1,5 @@
+import java.lang.management.ManagementFactory
+
 plugins {
     id("org.jetbrains.kotlin.jvm").version("latest.release")
 }
@@ -22,12 +24,12 @@ allprojects {
     repositories {
         mavenCentral()
 
-        maven {url = "https://auoeke.jfrog.io/artifactory/maven"}
+        maven {url = "https://maven.auoeke.net"}
     }
 
     dependencies {
         api(gradleApi())
-        api("net.gudenau.lib:unsafe:latest.integration")
+        api("net.auoeke:extensions:latest.integration")
         api("net.auoeke:reflect:latest.integration")
         api("org.ow2.asm:asm:latest.integration")
         api("org.ow2.asm:asm-tree:latest.integration")
@@ -68,24 +70,27 @@ allprojects {
     if (plugin) {
         plugins.apply("java-gradle-plugin")
 
-        pluginUnderTestMetadata {
-            rootProject.test.dependsOn(it)
-
-            doLast {
-                def destinationDirectory = "$rootProject.buildDir/pluginMetadata" as File
-                destinationDirectory.mkdirs()
-
-                def destination = "${destinationDirectory}/$project.name-$METADATA_FILE_NAME" as File
-                destination.delete()
-
-                def output = "${outputDirectory.asFile.get()}/$METADATA_FILE_NAME" as File
-                output.renameTo(destination)
+        sourceSets {
+            test {
+                kotlin.srcDir("test/src")
             }
+        }
+
+        dependencies {
+            testImplementation(rootProject.sourceSets.test.output)
+            testImplementation("org.junit.jupiter:junit-jupiter-api:latest.integration")
+            testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+        }
+
+        test {
+            dependsOn(pluginUnderTestMetadata)
+            useJUnitPlatform()
+            debug = ManagementFactory.runtimeMXBean.inputArguments.any {it.contains("jdwp")}
         }
 
         gradlePlugin {
             plugins {
-                register("wheel-$project.name") {
+                "wheel-$project.name" {
                     id = name
                     implementationClass = "net.auoeke.wheel.Wheel${project.name.split("-").collect {it.capitalize()} join()}Plugin"
                 }
@@ -112,16 +117,10 @@ subprojects {
 
 sourceSets {
     test {
-        kotlin.srcDir("test/src")
+        kotlin.srcDir("test")
     }
 }
 
 dependencies {
-    testImplementation(gradleTestKit())
-    testImplementation("org.junit.jupiter:junit-jupiter-api:latest.integration")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-}
-
-test {
-    useJUnitPlatform()
+    testCompileOnly(gradleTestKit())
 }

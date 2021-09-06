@@ -1,5 +1,6 @@
 package net.auoeke.wheel.loader
 
+import net.auoeke.extensions.type
 import net.auoeke.reflect.Classes
 import org.gradle.internal.classloader.VisitableURLClassLoader
 import org.objectweb.asm.ClassReader
@@ -12,30 +13,22 @@ import java.util.*
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 open class TransformingClassLoader(name: String, parent: ClassLoader?, urls: Collection<URL?>?) : VisitableURLClassLoader(name, parent, urls) {
-    fun transform(name: String, transformer: Transformer) {
-        val foundClass = findLoadedClass(name)
+    fun transform(name: String, transformer: (ClassNode) -> Unit) {
+        val foundClass = this.findLoadedClass(name)
 
-        if (foundClass == null) {
+        if (foundClass === null) {
             transformers.add(name to transformer)
         } else {
-            delegates.computeIfAbsent(this) {DelegateTransformingLoader(it)}.define(name, false, transformer)
+            delegates.computeIfAbsent(this, ::DelegateTransformingLoader).define(name, false, transformer)
         }
     }
 
     public override fun loadClass(name: String, resolve: Boolean): Class<*> {
-        if (name.startsWith("java.")) {
+        if (name.startsWith("java.") || name.startsWith("kotlin.")) {
             return super.loadClass(name, resolve)
         }
 
-        val delegate: TransformingClassLoader? = delegates[this]
-
-        if (delegate != null) {
-            val override = delegate.findLoadedClass(name)
-
-            if (override != null) {
-                return override
-            }
-        }
+        delegates[this]?.findLoadedClass(name)?.also {return it}
 
         for (index in transformers.indices.reversed()) {
             val (key, value) = transformers[index]
@@ -43,18 +36,18 @@ open class TransformingClassLoader(name: String, parent: ClassLoader?, urls: Col
             if (name == key) {
                 transformers.removeAt(index)
 
-                return define(name, resolve, value)
+                return this.define(name, resolve, value)
             }
         }
 
         return super.loadClass(name, resolve)
     }
 
-    protected fun define(name: String, resolve: Boolean, transformer: Transformer): Class<*> {
-        val classFile = getResource("${name.replace('.', '/')}.class")
+    private fun define(name: String, resolve: Boolean, transformer: (ClassNode) -> Unit): Class<*> {
+        val classFile = this.getResource("${name.replace('.', '/')}.class")
         val node = ClassNode()
         ClassReader(classFile.openStream()).accept(node, 0)
-        transformer.transform(node)
+        transformer(node)
 
         val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES)
         node.accept(writer)
@@ -62,15 +55,20 @@ open class TransformingClassLoader(name: String, parent: ClassLoader?, urls: Col
         val type = this.defineClass(name, bytecode, 0, bytecode.size, CodeSource(classFile, null as Array<Certificate?>?))
 
         if (resolve) {
-            resolveClass(type)
+            this.resolveClass(type)
         }
 
         return type
     }
 
     companion object {
-        val klass = Classes.klass(TransformingClassLoader::class.java)
-        private val transformers: MutableList<Pair<String, Transformer>> = ArrayList()
-        private val delegates: MutableMap<TransformingClassLoader, DelegateTransformingLoader> = IdentityHashMap()
+        val klass = Classes.klass(type<TransformingClassLoader>())
+        private val transformers: MutableList<Pair<String, (ClassNode) -> Unit>> = ArrayList()
+        private val delegates: MutableMap<TransformingClassLoader, TransformingClassLoader> = IdentityHashMap()
+
+        init {
+            Classes.load<Any>("kotlin.jvm.internal.Intrinsics")
+            Classes.load<Any>("kotlin.text.StringsKt")
+        }
     }
 }

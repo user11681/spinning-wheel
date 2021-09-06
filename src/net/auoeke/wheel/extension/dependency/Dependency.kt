@@ -6,13 +6,13 @@ import java.util.*
 class Dependency(val key: String, val artifact: String, val repository: String) {
     override fun equals(other: Any?): Boolean {
         return other === this || other is Dependency
-            && key == other.key
-            && artifact == other.artifact
-            && repository == other.repository
+            && this.key == other.key
+            && this.artifact == other.artifact
+            && this.repository == other.repository
     }
 
-    override fun hashCode(): Int = Objects.hash(key, artifact, repository)
-    override fun toString(): String = "$key ($artifact)"
+    override fun hashCode(): Int = Objects.hash(this.key, this.artifact, this.repository)
+    override fun toString(): String = "${this.key} (${this.artifact})"
 
-    fun resolveRepository(): String = WheelExtension.repository(repository)!!
+    fun resolveRepository(): String = WheelExtension.repository(this.repository)!!
 }

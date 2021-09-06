@@ -19,5 +19,5 @@ include(":forge-common")
 include(":loom-common")
 
 plugin(":fabric")
-plugin(":forge")
-plugin(":forge-loom")
+//plugin(":forge")
+//plugin(":forge-loom")

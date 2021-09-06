@@ -34,7 +34,7 @@ abstract class AbstractWheelForgePlugin<P : AbstractWheelForgePlugin<P, E>, E> :
             }
         }
 
-        if (this.extension.forge == null) {
+        if (this.extension.forge === null) {
             this.extension.forge = nodeStream((versioning ?: versioning()).lastChild.firstChild)
                 .filter {version -> version.startsWith(this.extension.minecraft!!)}
                 .findFirst()
@@ -42,7 +42,7 @@ abstract class AbstractWheelForgePlugin<P : AbstractWheelForgePlugin<P, E>, E> :
                 .orElseThrow {IllegalArgumentException("""Minecraft version "${this.extension.minecraft}" was not found at $FORGE_METADATA_URL.""")}
         }
 
-        log("Forge version: ${this.extension.forge}")
+        this.log("Forge version: ${this.extension.forge}")
     }
 
     fun defaultJavaVersion(): String {
@@ -55,7 +55,7 @@ abstract class AbstractWheelForgePlugin<P : AbstractWheelForgePlugin<P, E>, E> :
         protected fun versioning(): Node = DocumentBuilderFactory
            .newInstance()
            .newDocumentBuilder()
-           .parse(FORGE_METADATA_URL)
+           .parse(this.FORGE_METADATA_URL)
            .firstChild
            .lastChild
 

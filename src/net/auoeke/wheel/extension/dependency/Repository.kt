@@ -1,5 +1,6 @@
 package net.auoeke.wheel.extension.dependency
 
+import net.auoeke.extensions.string
 import java.util.stream.Collectors
 
 class Repository(val key: String, val url: String) {
@@ -31,7 +32,7 @@ class Repository(val key: String, val url: String) {
             string.append('\n')
         }
 
-        return string.append('}').toString()
+        return string.append('}').string
     }
 
     override fun equals(other: Any?): Boolean {

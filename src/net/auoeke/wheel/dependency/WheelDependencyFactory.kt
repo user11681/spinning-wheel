@@ -1,5 +1,7 @@
 package net.auoeke.wheel.dependency
 
+import net.auoeke.extensions.string
+import net.auoeke.extensions.type
 import net.auoeke.reflect.Classes
 import net.auoeke.wheel.WheelPlugin
 import net.auoeke.wheel.extension.WheelExtension
@@ -15,7 +17,8 @@ class WheelDependencyFactory : DefaultDependencyFactory(null, null, null, null, 
     }
 
     companion object {
-        val klass = Classes.klass(WheelDependencyFactory::class.java)
+        val klass = Classes.klass(type<WheelDependencyFactory>())
+
         private fun changeVersion(artifact: String, version: String): String {
             val segments = artifact.split(":") as MutableList
             segments[2] = version
@@ -28,7 +31,7 @@ class WheelDependencyFactory : DefaultDependencyFactory(null, null, null, null, 
                 val repositories = WheelPlugin.currentProject!!.repositories
 
                 for (artifactRepository in repositories) {
-                    if (artifactRepository is MavenArtifactRepository && repository == artifactRepository.url.toString()) {
+                    if (artifactRepository is MavenArtifactRepository && repository == artifactRepository.url.string) {
                         return
                     }
                 }
@@ -38,13 +41,13 @@ class WheelDependencyFactory : DefaultDependencyFactory(null, null, null, null, 
         }
 
         private fun addRepository(entry: WheelDependency?): Boolean {
-            if (entry != null) {
-                addRepository(entry.resolveRepository())
-
-                return true
+            if (entry === null) {
+                return false
             }
 
-            return false
+            this.addRepository(entry.resolveRepository())
+
+            return true
         }
 
         private fun resolve(dependency: String): Any {
@@ -53,16 +56,16 @@ class WheelDependencyFactory : DefaultDependencyFactory(null, null, null, null, 
             if (components.size == 2) {
                 val entry = WheelExtension.dependency(components[0])
 
-                if (addRepository(entry)) {
-                    return changeVersion(entry.artifact, components[1])
+                if (this.addRepository(entry)) {
+                    return this.changeVersion(entry!!.artifact, components[1])
                 }
             }
 
             val entry = WheelExtension.dependency(dependency)
 
-            return if (addRepository(entry)) {
-                entry.artifact
-            } else if (WheelPlugin.currentProject != null && WheelPlugin.currentProject!!.findProject(dependency) != null) {
+            return if (this.addRepository(entry)) {
+                entry!!.artifact
+            } else if (WheelPlugin.currentProject !== null && WheelPlugin.currentProject!!.findProject(dependency) !== null) {
                 WheelPlugin.currentProject!!.dependencies.project(mapOf("path" to dependency))
             } else dependency
         }

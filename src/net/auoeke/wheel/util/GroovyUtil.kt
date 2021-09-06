@@ -1,24 +1,24 @@
 package net.auoeke.wheel.util
 
+import net.auoeke.extensions.type
 import net.auoeke.reflect.Invoker
 import org.codehaus.groovy.runtime.callsite.CallSite
-import java.util.*
 
 @Suppress("NAME_SHADOWING")
 object GroovyUtil {
-    fun sites(type: Class<*>?): List<CallSite> {
-        return listOf(*Invoker.invoke(Invoker.findStatic(type, "\$getCallSiteArray", Array<CallSite>::class.java)))
+    private fun sites(type: Class<*>?): List<CallSite> {
+        return listOf(*Invoker.invoke(Invoker.findStatic(type, "\$getCallSiteArray", type<Array<CallSite>>())))
     }
 
     fun site(type: Class<*>?, index: Int): CallSite {
-        return sites(type)[index]
+        return this.sites(type)[index]
     }
 
     fun property(sites: List<CallSite>, o: Any?, vararg indexes: Int): Any? {
         var o = o
 
-        for (index in indexes) {
-            o = sites[index].callGetProperty(o)
+        indexes.forEach {
+            o = sites[it].callGetProperty(o)
         }
 
         return o
@@ -27,8 +27,8 @@ object GroovyUtil {
     fun call(sites: List<CallSite>, o: Any?, vararg indexes: Int): Any? {
         var o = o
 
-        for (index in indexes) {
-            o = sites[index].call(o)
+        indexes.forEach {
+            o = sites[it].call(o)
         }
 
         return o

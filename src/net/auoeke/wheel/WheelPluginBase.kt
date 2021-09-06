@@ -1,7 +1,9 @@
 package net.auoeke.wheel
 
+import net.auoeke.extensions.string
+import net.auoeke.extensions.type
 import net.auoeke.wheel.extension.WheelExtension
-import net.auoeke.wheel.util.Util
+import net.auoeke.wheel.util.tryCatch
 import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.artifacts.dsl.ArtifactHandler
@@ -61,7 +63,6 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
     val defaultTasks: MutableList<String> get() = this.project.defaultTasks
 
     fun checkMinecraftVersion()
-
     fun afterMain() {}
 
     fun checkVersions() {
@@ -73,15 +74,14 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
         this.dependency("testImplementation", "org.junit.jupiter:junit-jupiter:latest.integration")
     }
 
-
     private fun javaVersion(version: Any?): String {
-        return (if (version == "latest") JavaVersion.current() else version ?: this.defaultJavaVersion).toString()
+        return (if (version == "latest") JavaVersion.current() else version ?: this.defaultJavaVersion).string
     }
 
     fun configurePublication(publication: MavenPublication) {
-        publication.groupId = this.project.group.toString()
+        publication.groupId = this.project.group.string
         publication.artifactId = this.name
-        publication.version = this.project.version.toString()
+        publication.version = this.project.version.string
     }
 
     fun configureConfigurations() {
@@ -94,9 +94,9 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
                     val target = dependency.target
 
                     when (target.group) {
-                        "curseforge", "cf" -> dependency.useTarget(target.toString().replaceFirst("curseforge|cf", "curse.maven"))
+                        "curseforge", "cf" -> dependency.useTarget(target.string.replaceFirst("curseforge|cf", "curse.maven"))
                         "jitpack" -> {
-                            val components = target.toString().split(':') as MutableList<String>
+                            val components = target.string.split(':') as MutableList<String>
                             val repository = target.name.split('/', limit = 2)
                             components[0] = "com.github.${repository[0]}"
                             components[1] = repository[1]
@@ -110,8 +110,8 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
             configuration.dependencies.all {dependency ->
                 if (dependency is ExternalModuleDependency && dependency.group != null) {
                     when (dependency.group) {
-                        "curse.maven", "curseforge", "cf" -> this.repository("Curse Maven", "curse-maven")
-                        "jitpack" -> this.repository("JitPack", "jitpack")
+                        "curse.maven", "curseforge", "cf" -> this.repository("curse-maven", "Curse Maven")
+                        "jitpack" -> this.repository("jitpack", "JitPack")
                     }
                 }
             }
@@ -121,20 +121,18 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
         val bloatedInclude = this.createConfiguration("bloatedInclude")
         val modInclude = this.createConfiguration("modInclude").extendsFrom(bloatedInclude, intransitiveInclude)
         val apiInclude = this.createConfiguration("apiInclude")
-        val bloated = this.createConfiguration("bloated") {configuration ->
-            configuration.allDependencies.all {dependency ->
+        val bloated = this.createConfiguration("bloated") {
+            it.allDependencies.all {dependency ->
                 if (dependency is ModuleDependency) {
                     dependency.exclude(mapOf("module" to "fabric-api"))
                 }
-
             }
         }.extendsFrom(bloatedInclude)
-        val intransitive = this.createConfiguration("intransitive") {configuration ->
-            configuration.allDependencies.all {dependency ->
+        val intransitive = this.createConfiguration("intransitive") {
+            it.allDependencies.all {dependency ->
                 if (dependency is ModuleDependency) {
                     dependency.isTransitive = false
                 }
-
             }
         }.extendsFrom(intransitiveInclude).setTransitive(false)
 
@@ -164,15 +162,15 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
 
         this.tasks(ProcessResources::class).all {task ->
             task.filesMatching(this.metadataFile) {file ->
-                file.filter {contents -> contents.replace("\\$(\\{version}|version)", this.project.version.toString())}
+                file.filter {it.replace("\\$(\\{version}|version)", this.project.version.string)}
             }
         }
 
         if (this.extension.publish.enabled) {
-            val publishing: PublishingExtension = this.extension(PublishingExtension::class)
+            val publishing = this.extension(PublishingExtension::class)
 
             if (this.extension.publish.publication.enabled) {
-                publishing.publications.create(this.extension.publish.publication.name, MavenPublication::class.java, this::configurePublication)
+                publishing.publications.create(this.extension.publish.publication.name, type<MavenPublication>(), this::configurePublication)
             }
 
             if (this.extension.publish.local) {
@@ -192,18 +190,9 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
         }
     }
 
-    fun afterEvaluation(action: Action<in Project>) {
-        this.project.afterEvaluate(action)
-    }
+    fun afterEvaluation(action: Action<in Project>) = this.project.afterEvaluate(action)
 
-    fun apply(plugin: KClass<out Plugin<Project>>) {
-        this.plugins.apply(plugin.java)
-    }
-
-
-    fun <T : Any> extension(type: KClass<T>): T {
-        return this.extensions.getByType(type.java)
-    }
+    fun <T : Any> extension(type: KClass<T>): T = this.extensions.getByType(type.java)
 
     fun <T : Task> task(type: KClass<T>): T {
         val tasks = this.tasks.withType(type.java)
@@ -212,57 +201,36 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
         return tasks.iterator().next()
     }
 
-    fun sourceSet(name: String): SourceSet {
-        return this.sourceSets.getByName(name)
-    }
+    fun sourceSet(name: String): SourceSet = this.sourceSets.getByName(name)
 
-    fun configuration(name: String): Configuration {
-        return this.configurations.getByName(name)
-    }
+    fun configuration(name: String): Configuration = this.configurations.getByName(name)
 
-    fun createConfiguration(name: String): Configuration {
-        return this.createConfiguration(name, Actions.doNothing())
-    }
+    fun createConfiguration(name: String): Configuration = this.createConfiguration(name, Actions.doNothing())
 
-    fun createConfiguration(name: String, initializer: Action<Configuration>): Configuration {
-        return this.configurations.create(name, initializer)
-    }
+    fun createConfiguration(name: String, initializer: Action<Configuration>): Configuration = this.configurations.create(name, initializer)
 
-    fun file(path: Any): File {
-        return this.project.file(path)
-    }
+    fun file(path: Any): File = this.project.file(path)
 
-    fun <T : Task> tasks(type: KClass<T>): TaskCollection<T> {
-        return this.tasks.withType(type.java)
-    }
+    fun <T : Task> tasks(type: KClass<T>): TaskCollection<T> = this.tasks.withType(type.java)
 
     @SuppressWarnings("unchecked")
     fun <T : Task> task(name: String): T = this.tasks.getByName(name) as T
 
     fun defaultTask(vararg tasks: String) = Collections.addAll(this.defaultTasks, *tasks)
+
     fun log(message: String, vararg arguments: Any) = this.logger.lifecycle(message, arguments)
 
-    fun dependency(configuration: String, dependencyNotation: Any): Dependency? {
-        return this.dependencies.add(configuration, dependencyNotation)
-    }
+    fun dependency(configuration: String, dependencyNotation: Any): Dependency? = this.dependencies.add(configuration, dependencyNotation)
 
-    fun repository(name: String? = null, url: String): MavenArtifactRepository {
-        val resolvedURL = Util.tryCatch({URL(url)}, {URL(WheelExtension.repository(url))}).toURI()
+    fun repository(url: String, name: String? = null): MavenArtifactRepository {
+        val resolvedURL = {URL(url)}.tryCatch {URL(WheelExtension.repository(url))}.toURI()
 
-        return this.repositories.stream()
-            .filter {repository -> repository is MavenArtifactRepository && resolvedURL.equals(repository.url)}
-            .map {it as MavenArtifactRepository}
-            .findAny()
-            .orElseGet {
-                this.repositories.maven {repository ->
-                    repository.name = name
-                    repository.url = resolvedURL
-                }
+        return this.repositories
+            .find {repository -> repository is MavenArtifactRepository && resolvedURL.equals(repository.url)} as MavenArtifactRepository?
+            ?: this.repositories.maven {repository ->
+                repository.name = name
+                repository.url = resolvedURL
             }
-    }
-
-    fun execute(task: String) {
-        this.execute(this.task(task))
     }
 
     fun execute(task: Task) {
@@ -270,25 +238,19 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
         task.actions.forEach {action -> action.execute(task)}
     }
 
-    fun finished(action: Runnable) {
-        this.gradle.buildFinished {action.run()}
-    }
+    fun execute(task: String) = this.execute(this.task(task))
 
-    fun enqueue(task: String) {
-        this.gradle.taskGraph.whenReady {this.execute(task)}
-    }
+    fun finished(action: Runnable) = this.gradle.buildFinished {action.run()}
 
-    fun enqueue(task: Task) {
-        this.gradle.taskGraph.whenReady {this.execute(task)}
-    }
+    fun enqueue(task: String) = this.gradle.taskGraph.whenReady {this.execute(task)}
 
-    fun get(uri: String): String {
-        return http.send(HttpRequest.newBuilder(URI(uri)).GET().build(), HttpResponse.BodyHandlers.ofString()).body()
-    }
+    fun enqueue(task: Task) = this.gradle.taskGraph.whenReady {this.execute(task)}
+
+    fun get(uri: String): String = http.send(HttpRequest.newBuilder(URI(uri)).build(), HttpResponse.BodyHandlers.ofString()).body()
 
     companion object {
         const val MOD: String = "mod"
 
-        val http: HttpClient by lazy {HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build()}
+        val http: HttpClient by lazy(HttpClient::newHttpClient)
     }
 }

@@ -2,6 +2,7 @@ package net.auoeke.wheel
 
 import com.github.jengelman.gradle.plugins.shadow.ShadowBasePlugin
 import com.github.jengelman.gradle.plugins.shadow.ShadowPlugin
+import net.auoeke.extensions.type
 import net.auoeke.reflect.Accessor
 import net.auoeke.reflect.Classes
 import net.auoeke.wheel.extension.WheelForgeExtension
@@ -46,7 +47,7 @@ class WheelForgePlugin : AbstractWheelForgePlugin<WheelForgePlugin, WheelForgeEx
         }
         loader.transform("net.minecraftforge.gradle.common.util.Utils") {type ->
             val lambdaName = "lambda\$createRunConfigTasks\$13"
-            val projectType = Type.getType(Project::class.java)
+            val projectType = Type.getType(type<Project>())
             val void = Void.TYPE
 
             withMethod(lambdaName, type) {method ->
@@ -61,7 +62,7 @@ class WheelForgePlugin : AbstractWheelForgePlugin<WheelForgePlugin, WheelForgeEx
                     if (instruction is MethodInsnNode) {
                         when (instruction.name) {
                             "projectsEvaluated" -> {
-                                instruction.owner = Type.getInternalName(Project::class.java)
+                                instruction.owner = Type.getInternalName(type<Project>())
                                 instruction.name = "afterEvaluate"
                             }
                             "getGradle" -> {
@@ -106,8 +107,8 @@ class WheelForgePlugin : AbstractWheelForgePlugin<WheelForgePlugin, WheelForgeEx
     override fun applyPlugins() {
         super.applyPlugins()
 
-        this.apply(MixinGradlePlugin::class)
-        this.apply(ShadowPlugin::class)
+        this.apply<MixinGradlePlugin>()
+        this.apply<ShadowPlugin>()
 
         this.dependencyExtension = this.extension(DependencyManagementExtension::class)
         this.userdevExtension = this.extension(UserDevExtension::class)

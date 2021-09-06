@@ -17,7 +17,7 @@ class WheelForgeLoomPlugin : AbstractWheelForgePlugin<WheelForgeLoomPlugin, Whee
     override fun addRepositories() {
         super.addRepositories()
 
-        repository(url = "https://maven.architectury.dev")
+        this.repository("https://maven.architectury.dev")
     }
 
     override fun checkMinecraftVersion() {
@@ -28,8 +28,8 @@ class WheelForgeLoomPlugin : AbstractWheelForgePlugin<WheelForgeLoomPlugin, Whee
     override fun addDependencies() {
         super<AbstractWheelForgePlugin>.addDependencies()
 
-        dependency(Constants.Configurations.MINECRAFT, "com.mojang:minecraft:${this.extension.minecraft}")
-        dependency(Constants.Configurations.MAPPINGS, "net.fabricmc:yarn:${this.extension.minecraft}+build.${this.extension.yarn}:v2")
-        dependency(Constants.Configurations.FORGE, "net.minecraftforge:forge:${this.extension.minecraft}-${this.extension.forge}")
+        this.dependency(Constants.Configurations.MINECRAFT, "com.mojang:minecraft:${this.extension.minecraft}")
+        this.dependency(Constants.Configurations.MAPPINGS, "net.fabricmc:yarn:${this.extension.minecraft}+build.${this.extension.yarn}:v2")
+        this.dependency(Constants.Configurations.FORGE, "net.minecraftforge:forge:${this.extension.minecraft}-${this.extension.forge}")
     }
 }

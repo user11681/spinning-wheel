@@ -5,6 +5,7 @@ import net.auoeke.reflect.Classes
 import net.auoeke.wheel.dependency.WheelDependencyFactory
 import net.auoeke.wheel.extension.WheelExtension
 import net.auoeke.wheel.loader.TransformingClassLoader
+import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.plugins.JavaLibraryPlugin
@@ -51,8 +52,8 @@ abstract class WheelPlugin<P : WheelPlugin<P, E>, E : WheelExtension> : WheelPlu
     protected open fun beforeMain() {}
 
     protected open fun applyPlugins() {
-        this.apply(JavaLibraryPlugin::class)
-        this.apply(MavenPublishPlugin::class)
+        this.apply<JavaLibraryPlugin>()
+        this.apply<MavenPublishPlugin>()
 
         this.java.withSourcesJar()
     }
@@ -62,10 +63,16 @@ abstract class WheelPlugin<P : WheelPlugin<P, E>, E : WheelExtension> : WheelPlu
 
         this.repositories.all {repository ->
             if (repository is MavenArtifactRepository) {
-                repository.setUrl(WheelExtension.repository(repository.name))
+                val url = WheelExtension.repository(repository.name)
+
+                if (url !== null) {
+                    repository.setUrl(url)
+                }
             }
         }
     }
+
+    protected inline fun <reified T : Plugin<Project>> WheelPluginBase<*>.apply() = this.plugins.apply(T::class.java)
 
     companion object {
         val loader: TransformingClassLoader = Classes.reinterpret(WheelPlugin::class.java.classLoader, TransformingClassLoader.klass)
@@ -75,7 +82,7 @@ abstract class WheelPlugin<P : WheelPlugin<P, E>, E : WheelExtension> : WheelPlu
         var currentProject: Project? = null
 
         @JvmStatic
-        protected fun withMethod(name: String, type: ClassNode, action: Consumer<MethodNode> ) {
+        protected fun withMethod(name: String, type: ClassNode, action: Consumer<MethodNode>) {
             type.methods.stream().filter {method -> method.name.equals(name)}.forEach(action)
         }
     }

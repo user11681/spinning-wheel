@@ -1,22 +1,24 @@
 package net.auoeke.wheel.extension.publish
 
-import org.gradle.api.Action
+import groovy.lang.Closure
+import org.gradle.api.Project
 
-class PublishingConfig {
+@Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "unused")
+class PublishingConfig(private val project: Project) {
     val external = ExternalRepositoryConfig()
-    val publication = PublicationConfig()
+    var publication = PublicationConfig()
     var enabled = true
     var local = true
 
-    fun external(action: Action<ExternalRepositoryConfig?>) {
-        action.execute(external)
+    fun external(action: Closure<*>?) {
+        this.project.configure(this.external, action)
     }
 
-    fun publication(action: Action<PublicationConfig?>) {
-        action.execute(publication)
+    fun publication(action: Closure<*>?) {
+        this.project.configure(this.publication, action)
     }
 
     fun setPublication(enabled: Boolean) {
-        publication.enabled = enabled
+        this.publication.enabled = enabled
     }
 }

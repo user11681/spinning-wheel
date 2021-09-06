@@ -3,39 +3,28 @@ package net.auoeke.wheel.dependency
 import net.auoeke.wheel.extension.dependency.Dependency
 import net.auoeke.wheel.extension.dependency.Repository
 import net.auoeke.wheel.util.ObservableMap
-import net.auoeke.wheel.util.Util.sanitize
-import org.gradle.api.Action
+import net.auoeke.wheel.util.sanitize
 
 @Suppress("NAME_SHADOWING")
 class RepositoryContainer {
-    val repositories = ObservableMap<String, Repository>()
+    private val repositories: ObservableMap<String, Repository> = ObservableMap()
 
-    fun configure(action: Action<RepositoryContainer>): RepositoryContainer {
-        action.execute(this)
+    fun configure(action: RepositoryContainer.() -> Unit): RepositoryContainer = this.also {action(this)}
 
-        return this
-    }
+    fun repository(key: String): String? = this.repositories[sanitize(key)]?.url
 
-    fun repository(key: String): String? {
-        return repositories[sanitize(key)]?.url
-    }
-
-    fun repository(key: String, url: String): Repository {
-        return repositories.computeIfAbsent(sanitize(key)) {Repository(it, url)}!!
-    }
+    fun repository(key: String, url: String, configurator: Repository.() -> Unit = {}) = configurator(this.repositories.computeIfAbsent(sanitize(key)) {Repository(it, url)})
 
     fun putRepository(key: String, url: String) {
         val key = sanitize(key)
-        repositories[key] = Repository(key, url)
+        this.repositories[key] = Repository(key, url)
     }
 
-    fun entry(dependency: String): Dependency {
-        val sanitizedDependency = sanitize(dependency)
+    fun entry(dependency: String): Dependency? {
+        val sanitized = sanitize(dependency)
 
-        return repositories.values.stream()
-            .flatMap {it!!.dependencies.stream()}
-            .filter {entry -> sanitize(entry.key) == sanitizedDependency || sanitize(entry.artifact.split(':', limit = 3).toMutableList()[1]) == sanitizedDependency}
-            .findFirst()
-            .orElse(null)
+        return this.repositories.values
+            .flatMap(Repository::dependencies)
+            .find {entry -> sanitize(entry.key) == sanitized || sanitize(entry.artifact.split(':', limit = 3)[1]) == sanitized}
     }
 }

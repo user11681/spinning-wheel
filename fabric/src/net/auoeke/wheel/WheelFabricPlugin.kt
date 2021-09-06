@@ -1,7 +1,7 @@
 package net.auoeke.wheel
 
-import net.auoeke.wheel.extension.WheelFabricExtension
 import net.auoeke.wheel.extension.Channel
+import net.auoeke.wheel.extension.WheelFabricExtension
 import net.fabricmc.loom.util.Constants
 import org.gradle.api.Project
 
@@ -14,9 +14,9 @@ class WheelFabricPlugin : WheelPlugin<WheelFabricPlugin, WheelFabricExtension>()
     }
 
     override fun checkMinecraftVersion() {
-        if (this.extension.minecraft == null) {
-            if (latestMinecraftVersion == null) {
-                latestMinecraftVersion = meta(
+        if (this.extension.minecraft === null) {
+            if (latestMinecraftVersion === null) {
+                latestMinecraftVersion = this.meta(
                     "game",
                     if (this.extension.channel == Channel.RELEASE) "(?<=\"version\": \").*?(?=\",\\s*\"stable\": true)" else "(?<=\"version\": \").*?(?=\")"
                 ).filter {!it.group().contains("experiment")}.findFirst().orElseThrow().group()
@@ -31,13 +31,13 @@ class WheelFabricPlugin : WheelPlugin<WheelFabricPlugin, WheelFabricExtension>()
     override fun addDependencies() {
         super<WheelPlugin>.addDependencies()
 
-        dependency(Constants.Configurations.MINECRAFT, "com.mojang:minecraft:${this.extension.minecraft}")
-        dependency(Constants.Configurations.MAPPINGS, "net.fabricmc:yarn:${this.extension.minecraft}+build.${this.extension.yarn}:v2")
-        dependency(WheelPluginBase.MOD, "net.fabricmc:fabric-loader:latest.integration")
+        this.dependency(Constants.Configurations.MINECRAFT, "com.mojang:minecraft:${this.extension.minecraft}")
+        this.dependency(Constants.Configurations.MAPPINGS, "net.fabricmc:yarn:${this.extension.minecraft}+build.${this.extension.yarn}:v2")
+        this.dependency(WheelPluginBase.MOD, "net.fabricmc:fabric-loader:latest.integration")
 
         if (this.extension.nospam) {
-            dependency(WheelPluginBase.MOD, "narrator-off")
-            dependency(WheelPluginBase.MOD, "noauth")
+            this.dependency(WheelPluginBase.MOD, "narrator-off")
+            this.dependency(WheelPluginBase.MOD, "noauth")
         }
     }
 }
