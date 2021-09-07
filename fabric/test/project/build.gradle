@@ -30,11 +30,13 @@ repositories {
 }
 
 dependencies {
-    mod("arrp")
-    modInclude("api-screen-handler")
-    modInclude("api-screen")
-    bloated("cloth-config")
-    intransitive("mod-menu")
+    // mod("arrp")
+    // modInclude("api-screen-handler")
+    // modInclude("api-screen")
+    // bloated("cloth-config")
+    // intransitive("mod-menu")
+    implementation("org.ow2.asm:asm-all")
     mod("jitpack:Tuinity/Starlight:1.0.0-RC2")
+
     // mod("better-slabs")
 }

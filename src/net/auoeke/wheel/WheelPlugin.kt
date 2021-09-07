@@ -8,6 +8,7 @@ import net.auoeke.wheel.loader.TransformingClassLoader
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyFactory
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
 import org.objectweb.asm.tree.ClassNode
@@ -20,7 +21,6 @@ abstract class WheelPlugin<P : WheelPlugin<P, E>, E : WheelExtension> : WheelPlu
     override lateinit var extension: E
 
     protected fun apply(project: Project, plugin: String, extension: E) {
-        currentProject = project
         this.project = project
         this.extension = extension
         this.extensions.add("wheel", extension)
@@ -39,7 +39,8 @@ abstract class WheelPlugin<P : WheelPlugin<P, E>, E : WheelExtension> : WheelPlu
 
         this.afterEvaluation {this.afterEvaluation()}
 
-        Classes.reinterpret<Any>(Accessor.getObject(this.dependencies, "dependencyFactory"), WheelDependencyFactory.klass)
+        WheelDependencyFactory.project = this.project
+        Classes.reinterpret<Any>(Accessor.getObject<DependencyFactory>(dependencies, "dependencyFactory"), WheelDependencyFactory.klass)
 
         this.beforeMain()
         this.plugins.apply(plugin)
@@ -76,12 +77,11 @@ abstract class WheelPlugin<P : WheelPlugin<P, E>, E : WheelExtension> : WheelPlu
 
     companion object {
         val loader: TransformingClassLoader = Classes.reinterpret(WheelPlugin::class.java.classLoader, TransformingClassLoader.klass)
-        private val transformed: MutableSet<Class<out Any>> = HashSet()
-
         var latestMinecraftVersion: String? = null
 
-        // This does not work. Todo: fix
         var currentProject: Project? = null
+
+        private val transformed: MutableSet<Class<out Any>> = HashSet()
 
         @JvmStatic
         protected fun withMethod(name: String, type: ClassNode, action: Consumer<MethodNode>) {
