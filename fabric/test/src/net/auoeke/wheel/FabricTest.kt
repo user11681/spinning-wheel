@@ -6,12 +6,12 @@ import org.junit.platform.commons.annotation.Testable
 @Testable
 class FabricTest : WheelTest() {
     @Test
-    fun run() {
+    fun test() {
         super.debug().build()
     }
 
     @Test
-    fun build() {
-        super.debug("build").build()
+    fun publish() {
+        this.debug("publish").build()
     }
 }

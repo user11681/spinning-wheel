@@ -51,8 +51,7 @@ interface WheelLoomPlugin<E> : WheelPluginBase<E> where E : WheelExtension, E : 
     override fun configurePublication(publication: MavenPublication) {
         super.configurePublication(publication)
 
-        publication.artifact(this.task("remapJar"))
-        publication.artifact(this.task("sourcesJar")).builtBy(this.task("remapSourcesJar"))
+        publication.from(this.project.components.getByName("java"))
     }
 
     override fun afterMain() {

@@ -1,5 +1,5 @@
 plugins {
-    id("wheel-fabric").version("latest.integration")
+    id("wheel-fabric")
 }
 
 if (!plugins.hasPlugin("wheel-fabric")) {
@@ -12,13 +12,9 @@ allprojects {
     group = "net.auoeke"
     version = "1.2.5"
 
-    afterEvaluate {
-        tasks.publish.enabled = false
-    }
-
     wheel {
         nospam = false
-        publish = false
+        // publish = false
         channel = "latest"
         genSources = null
         java  = 16

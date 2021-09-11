@@ -1,7 +1,7 @@
 package net.auoeke.wheel.dependency
 
+import net.auoeke.extensions.asMutable
 import net.auoeke.extensions.string
-import net.auoeke.extensions.then
 import net.auoeke.extensions.type
 import net.auoeke.reflect.Classes
 import net.auoeke.wheel.extension.WheelExtension
@@ -18,7 +18,7 @@ class WheelDependencyFactory : DefaultDependencyFactory(null, null, null, null, 
         else -> dependencyNotation
     })
 
-    private fun withVersion(artifact: String, version: String): String = (artifact.split(":") as MutableList).also {
+    private fun withVersion(artifact: String, version: String): String = artifact.split(":").asMutable().also {
         when {
             it.size > 2 -> it[2] = version
             else -> it += version
@@ -29,8 +29,8 @@ class WheelDependencyFactory : DefaultDependencyFactory(null, null, null, null, 
         if (project !== null && repository !== null) {
             val repositories = project!!.repositories
 
-            for (artifactRepository in repositories) {
-                if (artifactRepository is MavenArtifactRepository && repository == artifactRepository.url.string) {
+            repositories.forEach {
+                if (it is MavenArtifactRepository && repository == it.url.string) {
                     return
                 }
             }
@@ -39,19 +39,19 @@ class WheelDependencyFactory : DefaultDependencyFactory(null, null, null, null, 
         }
     }
 
-    private fun addRepository(entry: WheelDependency?): Boolean = (entry !== null).then {
-        this.addRepository(entry!!.resolveRepository())
-    }
+    private fun addRepository(entry: WheelDependency?): Boolean = entry?.also {
+        this.addRepository(it.resolveRepository())
+    } !== null
 
     private fun resolve(dependency: String): Any {
-        val components = dependency.split(":") as MutableList
+        val components = dependency.split(":").asMutable()
 
         if (components.size == 2) {
             val entry = WheelExtension.dependency(components[0])
 
-            return when (this.addRepository(entry)) {
-                true -> this.withVersion(entry!!.artifact, components[1])
-                false -> this.withVersion(dependency, "latest.release")
+            return when {
+                this.addRepository(entry) -> this.withVersion(entry!!.artifact, components[1])
+                else -> this.withVersion(dependency, "latest.release")
             }
         }
 

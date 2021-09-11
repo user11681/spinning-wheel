@@ -45,8 +45,9 @@ abstract class AbstractWheelForgePlugin<P : AbstractWheelForgePlugin<P, E>, E> :
         this.log("Forge version: ${this.extension.forge}")
     }
 
-    fun defaultJavaVersion(): String {
-        return if (this.extension.minecraft!!.split("\\.", limit = 3).toMutableList()[1].toInt() >= 17) "16" else "8"
+    fun defaultJavaVersion(): String = when {
+        this.extension.minecraft!!.split("\\.", limit = 3).toMutableList()[1].toInt() >= 17 -> "16"
+        else -> "8"
     }
 
     companion object {

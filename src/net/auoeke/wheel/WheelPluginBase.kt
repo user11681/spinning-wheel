@@ -1,9 +1,10 @@
 package net.auoeke.wheel
 
+import net.auoeke.extensions.asMutable
 import net.auoeke.extensions.string
 import net.auoeke.extensions.type
 import net.auoeke.wheel.extension.WheelExtension
-import net.auoeke.wheel.util.tryCatch
+import net.auoeke.wheel.util.catch
 import org.gradle.api.*
 import org.gradle.api.artifacts.*
 import org.gradle.api.artifacts.dsl.ArtifactHandler
@@ -90,26 +91,26 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
                 resolution.cacheDynamicVersionsFor(0, "seconds")
                 resolution.cacheChangingModulesFor(0, "seconds")
 
-                resolution.eachDependency {dependency ->
-                    val target = dependency.target
+                resolution.eachDependency {
+                    val target = it.target
 
                     when (val group = target.group) {
-                        "curseforge", "cf" -> dependency.useTarget(target.string.replaceFirst(group, "curse.maven"))
+                        "curseforge", "cf" -> it.useTarget(target.string.replaceFirst(group, "curse.maven"))
                         "jitpack" -> {
-                            val components = target.string.split(':') as MutableList<String>
+                            val components = target.string.split(':').asMutable()
                             val repository = target.name.split('/', limit = 2)
                             components[0] = "com.github.${repository[0]}"
                             components[1] = repository[1]
 
-                            dependency.useTarget(components.joinToString(":"))
+                            it.useTarget(components.joinToString(":"))
                         }
                     }
                 }
             }
 
-            configuration.dependencies.all {dependency ->
-                if (dependency is ExternalModuleDependency && dependency.group != null) {
-                    when (dependency.group) {
+            configuration.dependencies.all {
+                if (it is ExternalModuleDependency && it.group != null) {
+                    when (it.group) {
                         "curse.maven", "curseforge", "cf" -> this.repository("curse-maven", "Curse Maven")
                         "jitpack" -> this.repository("jitpack", "JitPack")
                     }
@@ -194,12 +195,9 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
 
     fun <T : Any> extension(type: KClass<T>): T = this.extensions.getByType(type.java)
 
-    fun <T : Task> task(type: KClass<T>): T {
-        val tasks = this.tasks.withType(type.java)
-        assert(tasks.size == 1)
-
-        return tasks.iterator().next()
-    }
+    fun <T : Task> task(type: KClass<T>): T = this.tasks.withType(type.java).also {
+        assert(it.size == 1)
+    }.first()
 
     fun sourceSet(name: String): SourceSet = this.sourceSets.getByName(name)
 
@@ -223,7 +221,7 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
     fun dependency(configuration: String, dependencyNotation: Any): Dependency? = this.dependencies.add(configuration, dependencyNotation)
 
     fun repository(url: String, name: String? = null): MavenArtifactRepository {
-        val resolvedURL = {URL(url)}.tryCatch {URL(WheelExtension.repository(url))}.toURI()
+        val resolvedURL = {URL(url)}.catch {URL(WheelExtension.repository(url))}.toURI()
 
         return this.repositories
             .find {repository -> repository is MavenArtifactRepository && resolvedURL.equals(repository.url)} as MavenArtifactRepository?
@@ -234,8 +232,10 @@ interface WheelPluginBase<E : WheelExtension> : Plugin<Project> {
     }
 
     fun execute(task: Task) {
-        task.taskDependencies.getDependencies(task).forEach(this::execute)
-        task.actions.forEach {action -> action.execute(task)}
+        if (!task.state.executed) {
+            task.taskDependencies.getDependencies(task).forEach(this::execute)
+            task.actions.forEach {it.execute(task)}
+        }
     }
 
     fun execute(task: String) = this.execute(this.task(task))
